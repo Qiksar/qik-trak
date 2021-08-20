@@ -108,7 +108,4 @@ if (!hatConfig.operations) {
   hatConfig.operations.trackRelationships = true;
 }
 
-console.log(`qik-track will run with the following configuration:
-${JSON.stringify(hatConfig, null, '  ')}`)
-
 new QikTrack().ExecuteQikTrack(hatConfig, !silent)
