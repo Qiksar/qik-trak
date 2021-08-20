@@ -9,8 +9,7 @@
   "author": "NamSource Pty Ltd - www.namsource.com",
   "license": "GPL-3.0",
   "scripts": {
-    "start_cli": "node cli.js --config config.json",
-    "build": "npm build"
+    "start_cli": "node cli.js --config config.json"
   },
   "dependencies": {
     "axios": "^0.21.1",

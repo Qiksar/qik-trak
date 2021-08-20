@@ -1,0 +1,16 @@
+version: "3.6"
+
+services:
+  qik-trak:
+    env_file: .env
+
+    container_name: qik-trak
+
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+
+    command:
+      - node
+      - cli.js
+      - --use_env
