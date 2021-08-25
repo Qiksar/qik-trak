@@ -1,6 +1,7 @@
     {
         "hasuraEndpoint": "http://localhost:8002/v1/query",
         "hasuraAdminSecret": "YOUR_ADMIN_KEY",
+        "targetDatabase": "YOUR_DATABASE",
         "targetSchema": "YOUR_SCHEMA",
         "primaryKeySuffix": "_id",
         "logOutput": true

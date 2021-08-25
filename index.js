@@ -31,6 +31,7 @@ class QikTrack {
         this.tracker_log(config, "");
         this.tracker_log(config, "       qik-track           : Fast tracking Hasura setup");
         this.tracker_log(config, "");
+        this.tracker_log(config, "        DATABASE           : '" + config.targetDatabase + "'");
         this.tracker_log(config, "        SCHEMA             : '" + config.targetSchema + "'");
         this.tracker_log(config, "        HASURA ENDPOINT    : '" + config.hasuraEndpoint + "'");
         this.tracker_log(config, "        PRIMARY KEY SUFFIX : '" + config.primaryKeySuffix + "'");
@@ -217,7 +218,6 @@ class QikTrack {
         return name;
     }
 
-
     //#endregion
 
     //#region Table Tracking
@@ -231,20 +231,21 @@ class QikTrack {
         this.tracker_log(config, "REMOVE PREVIOUS HASURA TRACKING DETAILS FOR TABLES AND VIEWS");
 
         tables.map(async (table_name) => {
-            this.tracker_log(config, "    UNTRACK TABLE - " + table_name);
+            this.tracker_log(config, "    UNTRACK TABLE      - " + table_name);
 
             var query = {
-                type: "untrack_table",
+                type: "pg_untrack_table",
                 args: {
                     table: {
                         schema: config.targetSchema,
                         name: table_name
                     },
+                    source: config.targetDatabase, 
                     cascade: true
                 }
             };
 
-            await this.runGraphQL_Query(config, query)
+            await this.runGraphQL_Query(config, '/v1/metadata',  query)
                 .catch(e => {
                     if (e.response.data.error.includes("already untracked")) {
                         return;
@@ -286,14 +287,18 @@ class QikTrack {
             this.tracker_log(config, "    TRACK TABLE        - " + table_name);
 
             var query = {
-                type: "track_table",
+                type: "pg_track_table",
                 args: {
+                    source: config.targetDatabase, 
                     schema: config.targetSchema,
-                    name: table_name
+                    name: table_name,
+                    configuration: {
+                        custom_name: table_name
+                    }
                 }
             };
 
-            await this.runGraphQL_Query(config, query).catch(e => {
+            await this.runGraphQL_Query(config, '/v1/metadata', query).catch(e => {
 
                 if (e.response.data.error.includes("already tracked")) {
                     return;
@@ -320,6 +325,7 @@ class QikTrack {
     // Configure HASURA to track all relationships
     // This requires an array relationship in one direction and an object relationship in the opposite direction
     async trackRelationships(config, relationships) {
+        
         if (!config)
             throw ("config is required");
 
@@ -347,27 +353,57 @@ class QikTrack {
 
         if (relationship.addArrayRelationship) {
             const array_rel_spec = {
-                type: "create_array_relationship",
-                name: relationship.name ? relationship.name : config.getArrayRelationshipName(config, relationship),
-                srcTable: relationship.table2,
-                srcKey: relationship.key2,
-                destTable: relationship.table1,
-                destKey: relationship.key1
+                type: "pg_create_array_relationship",
+                
+                args: {
+                    name: relationship.name ? relationship.name : config.getArrayRelationshipName(config, relationship),
+
+                    table: {
+                        schema: config.targetSchema,
+                        name: relationship.table2
+                    },
+                    
+                    using: {
+                        foreign_key_constraint_on: {
+                            table: {
+                                schema: config.targetSchema,
+                                name:  relationship.table1
+                            },
+                            columns: [relationship.key1]
+                            }
+                    }
+                }
             };
 
+            this.tracker_log(config, "    ARRAY RELATIONSHIP - All " + relationship.table1 + " referencing " + relationship.table2 + " with column " + relationship.key1);
             await this.createRelationship(config, array_rel_spec);
         }
 
         if (relationship.addObjectRelationship) {
             const obj_rel_spec = {
-                type: "create_object_relationship",
-                name: relationship.name ? relationship.name : config.getObjectRelationshipName(config, relationship),
-                srcTable: relationship.table1,
-                srcKey: relationship.key1,
-                destTable: relationship.table2,
-                destKey: relationship.key2
+                type: "pg_create_object_relationship",
+              
+                args: {
+                    name: relationship.name ? relationship.name : config.getObjectRelationshipName(config, relationship),
+
+                    table: {
+                        schema: config.targetSchema,
+                        name:  relationship.table2
+                    },
+
+                    using: {
+                       foreign_key_constraint_on: {
+                            table: {
+                                schema: config.targetSchema,
+                                name: relationship.table1
+                            },
+                            columns:  [relationship.key1]
+                        }
+                    }
+                }
             };
 
+            this.tracker_log(config, "   OBJECT RELATIONSHIP - " + relationship.table1 + " referencing " + relationship.table2 + " using " +  relationship.key1);
             await this.createRelationship(config, obj_rel_spec);
         }
     }
@@ -378,36 +414,7 @@ class QikTrack {
         if (!config)
             throw ("config is required");
 
-        this.tracker_log(config, "    TRACK RELATIONSHIP - " + relSpec.type + " : " + relSpec.srcTable + "->" + relSpec.name);
-
-        var hasuraApiRelationshipType = {
-            type: relSpec.type,
-            args: {
-                table: {
-                    name: relSpec.srcTable, // Parent tables
-                    schema: config.targetSchema
-                },
-                name: relSpec.name, // Relationship name: parent table -> child table
-                using: {
-                    manual_configuration: {
-                        remote_table: {
-                            name: relSpec.destTable, // child table
-                            schema: config.targetSchema
-                        }
-                    }
-                }
-            }
-        };
-
-        // I wasn't sure how to add a key where the name is dynamic, which is why I had coded the setup of the foreign_key: primary_key as follows...
-
-        // Initialise with an empty object to specific foreign key -->> primary key
-        hasuraApiRelationshipType.args.using.manual_configuration.column_mapping = {};
-
-        // Create a name for the key, and assign a value to the key
-        hasuraApiRelationshipType.args.using.manual_configuration.column_mapping[relSpec.srcKey] = relSpec.destKey;
-
-        await this.runGraphQL_Query(config, hasuraApiRelationshipType)
+        await this.runGraphQL_Query(config, '/v1/metadata', relSpec)
             .catch(e => {
 
                 if (e.response.data.error.includes("already exists")) {
@@ -416,9 +423,9 @@ class QikTrack {
 
                 this.tracker_log(config, "GRAPHQL QUERY FAILED TO EXECUTE: ");
                 this.tracker_log(config, "");
-                this.tracker_log(config, JSON.stringify(hasuraApiRelationshipType));
+                this.tracker_log(config, JSON.stringify(relSpec));
                 this.tracker_log(config, "");
-                this.tracker_log(config, "EXCEPTION DETAILS - creating " + relSpec.type + " - " + relSpec.name);
+                this.tracker_log(config, "EXCEPTION DETAILS - creating " + relSpec.type + " - " + relSpec.args.name);
                 this.tracker_log(config, "");
                 this.tracker_log(config, e.response.data);
                 this.tracker_log(config, "");
@@ -557,7 +564,7 @@ CAST(${view.columns.jsonColumn} ->> '${col.jsonName}' AS ${col.sqlType}) AS "${c
             }
         };
 
-        return await this.runGraphQL_Query(config, sqlQuery)
+        return await this.runGraphQL_Query(config, '/v2/query', sqlQuery)
             .then(results => {
                 return results.data.result;
             }).catch(e => {
@@ -591,7 +598,7 @@ CAST(${view.columns.jsonColumn} ->> '${col.jsonName}' AS ${col.sqlType}) AS "${c
 
     //--------------------------------------------------------------------------------------------------------------------------
     // Execute a GraphQL query via the Hasura API
-    async runGraphQL_Query(config, query) {
+    async runGraphQL_Query(config, endpoint, query) {
         if (!config)
             throw ("config is required");
 
@@ -609,7 +616,7 @@ CAST(${view.columns.jsonColumn} ->> '${col.jsonName}' AS ${col.sqlType}) AS "${c
             };
         }
 
-        return await axios.post(config.hasuraEndpoint, query, requestConfig)
+        return await axios.post(config.hasuraEndpoint + endpoint, query, requestConfig)
             .then(result => {
                 return result;
             });

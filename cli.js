@@ -23,11 +23,13 @@ qik-track
                         to access hasura endpoint
                         eg: myadminsecretkey
 
+  --targetDatabase      the postgres database to connect to
+                        defaults to postgres
+
   --targetSchema        the postgres db target schema to connect to
-                        only used when the config file isn't present
                         defaults to public
 
-  --silent              don't print logs as the tool runs
+                        --silent              don't print logs as the tool runs
                         defaults to false
 
   --version             print the version
@@ -38,6 +40,7 @@ const settings = {
   hasuraEndpoint,
   hasuraAdminSecret,
   help,
+  targetDatabase,
   targetSchema,
   silent,
   version,
@@ -54,6 +57,7 @@ const settings = {
     hasuraEndpoint: null,
     hasuraAdminSecret: null,
     help: false,
+    targetDatabase: 'postgres',
     targetSchema: 'public',
     silent: false,
     version: false,
@@ -66,6 +70,9 @@ if (use_env && process.env.HASURA_ADMIN_SECRET)
 
 if (use_env && process.env.HASURA_ENDPOINT)
   settings.hasuraEndpoint = process.env.HASURA_ENDPOINT;
+
+if (use_env && process.env.TARGET_DATABASE)
+  settings.targetDatabase = process.env.TARGET_DATABASE;
 
 if (use_env && process.env.TARGET_SCHEMA)
   settings.targetSchema = process.env.TARGET_SCHEMA;
@@ -100,7 +107,6 @@ if (fs.existsSync(configFile)) {
   process.exit()
 }
 
-// Copy from example/run_hat.js
 if (!hatConfig.operations) {
   hatConfig.operations = {};
   hatConfig.operations.untrack = true;
