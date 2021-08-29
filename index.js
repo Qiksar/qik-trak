@@ -128,7 +128,8 @@ class QikTrack {
         if (!config)
             throw ("config is required");
 
-        return  relationship.table1;
+        const name = relationship.key1.replace(config.primaryKeySuffix, "") + "_" + relationship.table1;
+        return name; 
     }
 
 
@@ -138,7 +139,7 @@ class QikTrack {
         if (!config)
             throw ("config is required");
 
-        return "obj_" + relationship.key1.replace(config.primaryKeySuffix, "");
+        return relationship.key1.replace(config.primaryKeySuffix, "");
     }
 
     //---------------------------------------------------------------------------------------------------------------------------
@@ -361,17 +362,11 @@ class QikTrack {
 
                     table: {
                         schema: config.targetSchema,
-                        name:  relationship.table2
+                        name:  relationship.table1
                     },
 
                     using: {
-                       foreign_key_constraint_on: {
-                            table: {
-                                schema: config.targetSchema,
-                                name: relationship.table1
-                            },
-                            columns:  [relationship.key1]
-                        }
+                       foreign_key_constraint_on: relationship.key1
                     }
                 }
             };
