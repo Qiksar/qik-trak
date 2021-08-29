@@ -39,14 +39,7 @@ class QikTrack {
         this.tracker_log(config, "--------------------------------------------------------------");
         this.tracker_log(config, "");
 
-
-        if (!config.getArrayRelationshipName) {
-            config.getArrayRelationshipName = this.defaultArrayRelationshipName;
-        }
-
-        if (!config.getObjectRelationshipName) {
-            config.getObjectRelationshipName = this.defaultObjectRelationshipName;
-        }
+        config.getObjectRelationshipName = this.defaultObjectRelationshipName;
 
 
         // --------------------------------------------------------------------------------------------------------------------------
@@ -128,34 +121,24 @@ class QikTrack {
     // Setup of relationship naming should be done before execution of the auto tracker
     //#region Relationship naming
 
-    //---------------------------------------------------------------------------------------------------------------------------
-    // If foreign key name and primary key are same, then use the table name as relationship name
-    UseDefaultRelationshipNaming(config) {
-        if (!config)
-            throw ("config is required");
-
-        config.getArrayRelationshipName = this.defaultArrayRelationshipName;
-        config.getObjectRelationshipName = this.defaultObjectRelationshipName;
-    }
 
     //---------------------------------------------------------------------------------------------------------------------------
     // Default relationship name builder
-    defaultArrayRelationshipName(config, relationship) {
+    getArrayRelationshipName(config, relationship) {
         if (!config)
             throw ("config is required");
 
-        return relationship.key1.replace(config.primaryKeySuffix, "") + "_" + relationship.table1;
+        return  relationship.table1;
     }
 
 
     //---------------------------------------------------------------------------------------------------------------------------
     // Default relationship name builder
-    defaultObjectRelationshipName(config, relationship) {
+    getObjectRelationshipName(config, relationship) {
         if (!config)
             throw ("config is required");
 
-        //return relationship.table1 + "_" + relationship.key1.replace(config.primaryKeySuffix, "");
-        return relationship.key1.replace(config.primaryKeySuffix, "");
+        return "obj_" + relationship.key1.replace(config.primaryKeySuffix, "");
     }
 
     //---------------------------------------------------------------------------------------------------------------------------
@@ -329,12 +312,6 @@ class QikTrack {
         if (!config)
             throw ("config is required");
 
-        if ((!config.primaryKeySuffix || config.primaryKeySuffix.trim() == "") &&
-            (!config.getArrayRelationshipName || !getObjectRelationshipName)
-        ) {
-            throw "'config.primaryKeySuffix' is not specified. Both config.getArrayRelationshipName and config.getObjectRelationshipName are required.";
-        }
-
         this.tracker_log(config, "");
         this.tracker_log(config, "CONFIGURE HASURA RELATIONSHIP TRACKING");
 
@@ -343,10 +320,6 @@ class QikTrack {
         });
     }
 
-    // --------------------------------------------------------------------------------------------------------------------------
-    // It is possible to pass in two functions, which should generate the name of the relationship:
-    // getArrayRelationshipName - Must return a string, used as the name of array relationships
-    // getObjectRelationshipName - Must return a string, used as the name of object relationships
     async createRelationships(config, relationship) {
         if (!config)
             throw ("config is required");
@@ -356,7 +329,7 @@ class QikTrack {
                 type: "pg_create_array_relationship",
                 
                 args: {
-                    name: relationship.name ? relationship.name : config.getArrayRelationshipName(config, relationship),
+                    name: this.getArrayRelationshipName(config, relationship),
 
                     table: {
                         schema: config.targetSchema,
@@ -384,7 +357,7 @@ class QikTrack {
                 type: "pg_create_object_relationship",
               
                 args: {
-                    name: relationship.name ? relationship.name : config.getObjectRelationshipName(config, relationship),
+                    name: this.getObjectRelationshipName(config, relationship),
 
                     table: {
                         schema: config.targetSchema,
