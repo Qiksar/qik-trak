@@ -91,7 +91,7 @@ I have a postgres database which I build and seed from a SQL script. The next st
 Moments later, my Hasura tracking is all setup.
 
 Key point: This is a very simple membership database, and now my *members* table is called just that, not *membership_members*.
-
+```
 
 > qik-track@2.3.1 start_cli C:\dev\qik-trak
 > node cli.js
@@ -147,4 +147,4 @@ CONFIGURE HASURA RELATIONSHIP TRACKING
    OBJECT RELATIONSHIP - syndicate_chat referencing syndicates using syndicate_id
    OBJECT RELATIONSHIP - chat_channels referencing members using from_member_id
    OBJECT RELATIONSHIP - chat_channels referencing members using to_member_id
-
+```
