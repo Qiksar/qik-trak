@@ -4,6 +4,8 @@ Super fast and oppinionated setup for Hasura table and relationship tracking.
 
 In one line, qik-trak applies intuitive names to your tables and relationships, and provides a no-touch setup process for automated tracking settings. In other words, you don't have to use the Hasura Console to track your database and modify relationships names, which can be very abstract when they are set to the defaults used by Hasura.
 
+Skip to the end to see sample output, this might give you an instant idea of what the tool does.
+
 ## What you need to get started
 
 All you need is (most likely already have) is a postgres database with Hasura. 
@@ -80,3 +82,69 @@ Perhaps a YAML description of the database could help with creating and seeding 
 
 ## CRUD APIs
 Based on acceptance of an oppinionated system, it may be valuable to generate REST endpoints that provide basic CRUD functions. This helps to reduce the amount of data handling code in the app, and refactors queries out of code, where they can be more easily edited through the Hasura console.
+
+
+# Sample Output
+
+I have a postgres database which I build and seed from a SQL script. The next step is to run the cli, as indicated below.
+
+Moments later, my Hasura tracking is all setup.
+
+Key point: This is a very simple membership database, and now my *members* table is called just that, not *membership_members*.
+
+
+> qik-track@2.3.1 start_cli C:\dev\qik-trak
+> node cli.js
+
+--------------------------------------------------------------
+
+        qik-track          : Rapid, intuitive Hasura tracking setup
+
+        DATABASE           : 'members'
+        SCHEMA             : 'membership'
+        HASURA ENDPOINT    : 'http://localhost:8092'
+        PRIMARY KEY SUFFIX : '_id'
+
+--------------------------------------------------------------     
+
+REMOVE PREVIOUS HASURA TRACKING DETAILS FOR TABLES AND VIEWS
+    UNTRACK TABLE      - chat_channels 
+    UNTRACK TABLE      - member_role   
+    UNTRACK TABLE      - member_status 
+    UNTRACK TABLE      - members       
+    UNTRACK TABLE      - messages      
+    UNTRACK TABLE      - syndicate_chat
+    UNTRACK TABLE      - syndicates    
+
+CONFIGURE HASURA TABLE/VIEW TRACKING  
+    TRACK TABLE        - chat_channels
+    TRACK TABLE        - member_role
+    TRACK TABLE        - member_status
+    TRACK TABLE        - members
+    TRACK TABLE        - messages
+    TRACK TABLE        - syndicate_chat
+    TRACK TABLE        - syndicates
+
+CONFIGURE HASURA RELATIONSHIP TRACKING
+    ARRAY RELATIONSHIP - syndicate_members : Lookup all members where syndicate matches syndicates
+    ARRAY RELATIONSHIP - member_role_members : Lookup all members where member_role matches member_role
+    ARRAY RELATIONSHIP - member_status_members : Lookup all members where member_status matches member_status
+    ARRAY RELATIONSHIP - chair_syndicates : Lookup all syndicates where chair matches members
+    ARRAY RELATIONSHIP - to_member_messages : Lookup all messages where to_member_id matches members
+    ARRAY RELATIONSHIP - from_member_messages : Lookup all messages where from_member_id matches members
+    ARRAY RELATIONSHIP - sender_syndicate_chat : Lookup all syndicate_chat where sender_id matches members
+    ARRAY RELATIONSHIP - syndicate_syndicate_chat : Lookup all syndicate_chat where syndicate_id matches syndicates        
+    ARRAY RELATIONSHIP - to_member_chat_channels : Lookup all chat_channels where to_member_id matches members
+    ARRAY RELATIONSHIP - from_member_chat_channels : Lookup all chat_channels where from_member_id matches members
+
+   OBJECT RELATIONSHIP - syndicate_chat referencing members using sender_id
+   OBJECT RELATIONSHIP - members referencing syndicates using syndicate
+   OBJECT RELATIONSHIP - members referencing member_status using member_status
+   OBJECT RELATIONSHIP - syndicates referencing members using chair                         <<<< Here is a good example. This column would be called member, now it's called **chair** which is the function of the column, i.e. who is the chair person of the syndicate, which has many members. So calling this column member, would be dumb! :)
+   OBJECT RELATIONSHIP - messages referencing members using from_member_id
+   OBJECT RELATIONSHIP - messages referencing members using to_member_id
+   OBJECT RELATIONSHIP - members referencing member_role using member_role
+   OBJECT RELATIONSHIP - syndicate_chat referencing syndicates using syndicate_id
+   OBJECT RELATIONSHIP - chat_channels referencing members using from_member_id
+   OBJECT RELATIONSHIP - chat_channels referencing members using to_member_id
+
