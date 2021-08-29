@@ -4,6 +4,14 @@ Super fast and oppinionated setup for Hasura table and relationship tracking.
 
 In one line, qik-trak applies intuitive names to your tables and relationships, and provides a no-touch setup process for automated tracking settings. In other words, you don't have to use the Hasura Console to track your database and modify relationships names, which can be very abstract when they are set to the defaults used by Hasura.
 
+## What you need to get started
+
+All you need is (most likely already have) is a postgres database with Hasura. 
+
+**WARNING**: This tool will remove all of the current tracking data (if any exists) and will then implement tracking with names that closely match the naming convention of your database.
+
+Next, read through this brief guide on why the tool exists, what it does and how to run it.
+
 ## The problem we're trying to solve
 
 Personally, when I build and test systems I like to have a quick means of creating a database, loading data, setting up Hasura and running queries. Because data
