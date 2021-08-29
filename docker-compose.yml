@@ -13,4 +13,3 @@ services:
     command:
       - node
       - cli.js
-      - --use_env

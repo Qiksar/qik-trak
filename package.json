@@ -9,7 +9,7 @@
   "author": "NamSource Pty Ltd - www.namsource.com",
   "license": "GPL-3.0",
   "scripts": {
-    "start_cli": "node cli.js --use_env"
+    "start_cli": "node cli.js"
   },
   "dependencies": {
     "axios": "^0.21.1",
