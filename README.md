@@ -1,4 +1,4 @@
-# qik-track
+# qik-trak
 
 Super fast and oppinionated setup for Hasura table and relationship tracking.
 
