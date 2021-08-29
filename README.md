@@ -2,6 +2,8 @@
 
 Super fast and oppinionated setup for Hasura table and relationship tracking.
 
+In one line, qik-trak applies intuitive names to your tables and relationships, and provides a no-touch setup process for automated tracking settings. In other words, you don't have to use the Hasura Console to track your database and modify relationships names, which can be very abstract when they are set to the defaults used by Hasura.
+
 ## The problem we're trying to solve
 
 Personally, when I build and test systems I like to have a quick means of creating a database, loading data, setting up Hasura and running queries. Because data
