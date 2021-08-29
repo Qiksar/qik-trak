@@ -1,9 +1,6 @@
 #!/usr/bin/env node
 
-const fs = require('fs');
-const path = require('path');
 const env = require('dotenv').config();
-
 const QikTrack = require('./index.js');
 
 
