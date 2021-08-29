@@ -137,14 +137,15 @@ CONFIGURE HASURA RELATIONSHIP TRACKING
     ARRAY RELATIONSHIP - to_member_chat_channels : Lookup all chat_channels where to_member_id matches members
     ARRAY RELATIONSHIP - from_member_chat_channels : Lookup all chat_channels where from_member_id matches members
 
-   OBJECT RELATIONSHIP - syndicate_chat referencing members using sender_id
-   OBJECT RELATIONSHIP - members referencing syndicates using syndicate
-   OBJECT RELATIONSHIP - members referencing member_status using member_status
-   OBJECT RELATIONSHIP - syndicates referencing members using chair                         <<<< Here is a good example. This column would be called member, now it's called **chair** which is the function of the column, i.e. who is the chair person of the syndicate, which has many members. So calling this column member, would be dumb! :)
-   OBJECT RELATIONSHIP - messages referencing members using from_member_id
-   OBJECT RELATIONSHIP - messages referencing members using to_member_id
-   OBJECT RELATIONSHIP - members referencing member_role using member_role
-   OBJECT RELATIONSHIP - syndicate_chat referencing syndicates using syndicate_id
-   OBJECT RELATIONSHIP - chat_channels referencing members using from_member_id
-   OBJECT RELATIONSHIP - chat_channels referencing members using to_member_id
+   OBJECT RELATIONSHIP - member_role is members referencing member_role using member_role
+   OBJECT RELATIONSHIP - syndicate is members referencing syndicates using syndicate
+   OBJECT RELATIONSHIP - member_status is members referencing member_status using member_status
+   OBJECT RELATIONSHIP - chair is syndicates referencing members using chair <<<< Here is a good example. This column would be called member, now it's called **chair** which is the function of the column, i.e. who is the chair person of the syndicate, which has many members. So calling this column member, would be dumb! :)
+   OBJECT RELATIONSHIP - from_member is messages referencing members using from_member_id
+   OBJECT RELATIONSHIP - to_member is chat_channels referencing members using to_member_id
+   OBJECT RELATIONSHIP - to_member is messages referencing members using to_member_id
+   OBJECT RELATIONSHIP - sender is syndicate_chat referencing members using sender_id
+   OBJECT RELATIONSHIP - syndicate is syndicate_chat referencing syndicates using syndicate_id
+   OBJECT RELATIONSHIP - from_member is chat_channels referencing members using from_member_id
+   
 ```
