@@ -29,7 +29,7 @@ class QikTrack {
 
         this.tracker_log(config, "--------------------------------------------------------------");
         this.tracker_log(config, "");
-        this.tracker_log(config, "       qik-track           : Fast tracking Hasura setup");
+        this.tracker_log(config, "        qik-track          : Rapid, intuitive Hasura tracking setup");
         this.tracker_log(config, "");
         this.tracker_log(config, "        DATABASE           : '" + config.targetDatabase + "'");
         this.tracker_log(config, "        SCHEMA             : '" + config.targetSchema + "'");
@@ -375,7 +375,7 @@ class QikTrack {
                 }
             };
 
-            this.tracker_log(config, "    ARRAY RELATIONSHIP - All " + relationship.table1 + " referencing " + relationship.table2 + " with column " + relationship.key1);
+            this.tracker_log(config, "    ARRAY RELATIONSHIP - " + array_rel_spec.args.name + " : Lookup all " + relationship.table1 + " where " + relationship.key1 + " matches " + relationship.table2 );
             await this.createRelationship(config, array_rel_spec);
         }
 
