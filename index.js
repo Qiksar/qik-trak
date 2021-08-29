@@ -403,7 +403,7 @@ class QikTrack {
                 }
             };
 
-            this.tracker_log(config, "   OBJECT RELATIONSHIP - " + relationship.table1 + " referencing " + relationship.table2 + " using " +  relationship.key1);
+            this.tracker_log(config, "   OBJECT RELATIONSHIP - " + obj_rel_spec .args.name + " is " + relationship.table1 + " referencing " + relationship.table2 + " using " +  relationship.key1);
             await this.createRelationship(config, obj_rel_spec);
         }
     }
