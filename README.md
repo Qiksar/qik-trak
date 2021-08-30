@@ -1,4 +1,10 @@
-# qik-trak
+```
+   ___  _ _       _____          _    
+  / _ \(_) | __  |_   _| __ __ _| | __
+ | | | | | |/ /____| || '__/ _` | |/ /
+ | |_| | |   <_____| || | | (_| |   < 
+  \__\_\_|_|\_\    |_||_|  \__,_|_|\_\
+```                                   
 
 Super fast and oppinionated setup for Hasura table and relationship tracking.
 
