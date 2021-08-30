@@ -99,59 +99,38 @@ Moments later, my Hasura tracking is all setup.
 Key point: This is a very simple membership database, and now my *members* table is called just that, not *membership_members*.
 ```
 
-> qik-track@2.3.1 start_cli C:\dev\qik-trak
-> node cli.js
 
 --------------------------------------------------------------
 
         qik-track          : Rapid, intuitive Hasura tracking setup
 
-        DATABASE           : 'members'
+        DATABASE           : 'qiktrak'
         SCHEMA             : 'membership'
-        HASURA ENDPOINT    : 'http://localhost:8092'
+        HASURA ENDPOINT    : 'http://localhost:7001'
         PRIMARY KEY SUFFIX : '_id'
 
---------------------------------------------------------------     
+--------------------------------------------------------------
 
 REMOVE PREVIOUS HASURA TRACKING DETAILS FOR TABLES AND VIEWS
-    UNTRACK TABLE      - chat_channels 
-    UNTRACK TABLE      - member_role   
-    UNTRACK TABLE      - member_status 
-    UNTRACK TABLE      - members       
-    UNTRACK TABLE      - messages      
-    UNTRACK TABLE      - syndicate_chat
-    UNTRACK TABLE      - syndicates    
+    UNTRACK TABLE      - groups
+    UNTRACK TABLE      - members
+    UNTRACK TABLE      - roles
+    UNTRACK TABLE      - status
 
-CONFIGURE HASURA TABLE/VIEW TRACKING  
-    TRACK TABLE        - chat_channels
-    TRACK TABLE        - member_role
-    TRACK TABLE        - member_status
+CONFIGURE HASURA TABLE/VIEW TRACKING
+    TRACK TABLE        - groups
     TRACK TABLE        - members
-    TRACK TABLE        - messages
-    TRACK TABLE        - syndicate_chat
-    TRACK TABLE        - syndicates
+    TRACK TABLE        - roles
+    TRACK TABLE        - status
 
 CONFIGURE HASURA RELATIONSHIP TRACKING
-    ARRAY RELATIONSHIP - syndicate_members : Lookup all members where syndicate matches syndicates
-    ARRAY RELATIONSHIP - member_role_members : Lookup all members where member_role matches member_role
-    ARRAY RELATIONSHIP - member_status_members : Lookup all members where member_status matches member_status
-    ARRAY RELATIONSHIP - chair_syndicates : Lookup all syndicates where chair matches members
-    ARRAY RELATIONSHIP - to_member_messages : Lookup all messages where to_member_id matches members
-    ARRAY RELATIONSHIP - from_member_messages : Lookup all messages where from_member_id matches members
-    ARRAY RELATIONSHIP - sender_syndicate_chat : Lookup all syndicate_chat where sender_id matches members
-    ARRAY RELATIONSHIP - syndicate_syndicate_chat : Lookup all syndicate_chat where syndicate_id matches syndicates        
-    ARRAY RELATIONSHIP - to_member_chat_channels : Lookup all chat_channels where to_member_id matches members
-    ARRAY RELATIONSHIP - from_member_chat_channels : Lookup all chat_channels where from_member_id matches members
+    ARRAY RELATIONSHIP - status_members : Lookup all members where status_id matches status
+    ARRAY RELATIONSHIP - role_members : Lookup all members where role_id matches roles
+    ARRAY RELATIONSHIP - group_members : Lookup all members where group_id matches groups
+    ARRAY RELATIONSHIP - leader_groups : Lookup all groups where leader_id matches members
 
-   OBJECT RELATIONSHIP - member_role is members referencing member_role using member_role
-   OBJECT RELATIONSHIP - syndicate is members referencing syndicates using syndicate
-   OBJECT RELATIONSHIP - member_status is members referencing member_status using member_status
-   OBJECT RELATIONSHIP - chair is syndicates referencing members using chair <<<< Here is a good example. This column would be called member, now it's called **chair** which is the function of the column, i.e. who is the chair person of the syndicate, which has many members. So calling this column member, would be dumb! :)
-   OBJECT RELATIONSHIP - from_member is messages referencing members using from_member_id
-   OBJECT RELATIONSHIP - to_member is chat_channels referencing members using to_member_id
-   OBJECT RELATIONSHIP - to_member is messages referencing members using to_member_id
-   OBJECT RELATIONSHIP - sender is syndicate_chat referencing members using sender_id
-   OBJECT RELATIONSHIP - syndicate is syndicate_chat referencing syndicates using syndicate_id
-   OBJECT RELATIONSHIP - from_member is chat_channels referencing members using from_member_id
-   
+   OBJECT RELATIONSHIP - status is members referencing status using status_id
+   OBJECT RELATIONSHIP - group is members referencing groups using group_id
+   OBJECT RELATIONSHIP - role is members referencing roles using role_id
+   OBJECT RELATIONSHIP - leader is groups referencing members using leader_id
 ```
