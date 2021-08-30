@@ -1,10 +1,9 @@
 #!/usr/bin/env node
 
 const env = require('dotenv').config();
-const QikTrack = require('./index.js');
+const QikTrak = require('./qik-trak');
 
-
-const hatConfig = {
+const cfg = {
     operations: 
     {
       untrack: true,
@@ -19,4 +18,4 @@ const hatConfig = {
     targetSchema: process.env.TARGET_SCHEMA
   }
 
-new QikTrack().ExecuteQikTrack(hatConfig)
+new QikTrak(cfg).ExecuteQikTrack()

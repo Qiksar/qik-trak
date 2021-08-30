@@ -1,6 +1,39 @@
 version: "3.6"
 
 services:
+
+  qiktrak_db:
+      env_file: .env
+
+      container_name: qiktrak_db
+      image: postgres
+
+      volumes:
+          - ./initdb:/docker-entrypoint-initdb.d/
+
+      ports:
+          - '7000:5432'
+
+      restart: always
+
+  qiktrak_gql:
+      env_file: .env
+      
+      image: hasura/graphql-engine:latest
+      container_name: qiktrak_gql
+
+      links: 
+          - qiktrak_db
+
+      ports:
+          - '7001:8080'
+
+      command:
+          - graphql-engine
+          - serve
+
+      restart: always
+
   qik-trak:
     env_file: .env
 
@@ -9,6 +42,10 @@ services:
     build:
       context: .
       dockerfile: ./Dockerfile
+    
+    links: 
+      - qiktrak_db
+      - qiktrak_gql
 
     command:
       - node
