@@ -1,4 +1,5 @@
 const axios = require("axios");
+const fs = require('fs');
 
 class QikTrakHasura {
 
@@ -12,22 +13,12 @@ class QikTrakHasura {
 
     //--------------------------------------------------------------------------------------------------------------------------
     // Execute a list of SQL scripts
-    async executeSqlScripts(scripts) {
-        this.Logger.Log("");
-        this.Logger.Log("EXECUTE SQL SCRIPTS");
+    async executeSqlScript(scriptFilename) {
+        var content = fs.readFileSync(scriptFilename, { encoding: "utf8" });
 
-        scripts.map(async (s) => {
-
-            var content = fs.readFileSync(s.source, { encoding: "utf8" });
-            this.Logger.Log("    EXECUTE SQL SCRIPT - " + s.source);
-
-            if (content.trim().length > 0) {
-                await this.runSQL_Query(content);
-            }
-
-        });
-
-        this.Logger.Log("");
+        if (content.trim().length > 0) {
+            await this.runSQL_Query(content);
+        }
     }
 
 
@@ -48,30 +39,30 @@ class QikTrakHasura {
             .then(results => {
                 return results.data.result;
             }).catch(e => {
-                this.Logger.Log("");
-                this.Logger.Log("");
-                this.Logger.Log("--------------------------------------------------------------");
-                this.Logger.Log("");
-                this.Logger.Log("QIK-TRAK: ERROR");
-                this.Logger.Log("");
-                this.Logger.Log("SQL QUERY FAILED TO EXECUTE: ");
-                this.Logger.Log("");
-                this.Logger.Log("ENDPOINT ADDRESS : " + this.config.hasuraEndpoint);
-                this.Logger.Log("");
+                this.config.Logger.Log("");
+                this.config.Logger.Log("");
+                this.config.Logger.Log("--------------------------------------------------------------");
+                this.config.Logger.Log("");
+                this.config.Logger.Log("QIK-TRAK: ERROR");
+                this.config.Logger.Log("");
+                this.config.Logger.Log("SQL QUERY FAILED TO EXECUTE: ");
+                this.config.Logger.Log("");
+                this.config.Logger.Log("ENDPOINT ADDRESS : " + this.config.hasuraEndpoint);
+                this.config.Logger.Log("");
 
                 if (!e.response)
-                    this.Logger.Log("Error Message : " + e);
+                    this.config.Logger.Log("Error Message : " + e);
                 else
-                    this.Logger.Log("Error Message : " + e.response.data.internal.error.message);
+                    this.config.Logger.Log("Error Message : " + e.response.data.internal.error.message);
 
-                this.Logger.Log("");
-                this.Logger.Log("SQL Statement:");
-                this.Logger.Log("");
-                this.Logger.Log(sql_statement);
-                this.Logger.Log("");
-                this.Logger.Log("Check for SQL syntax errors. Test the query in your admin tool.");
-                this.Logger.Log("");
-                this.Logger.Log("--------------------------------------------------------------");
+                this.config.Logger.Log("");
+                this.config.Logger.Log("SQL Statement:");
+                this.config.Logger.Log("");
+                this.config.Logger.Log(sql_statement);
+                this.config.Logger.Log("");
+                this.config.Logger.Log("Check for SQL syntax errors. Test the query in your admin tool.");
+                this.config.Logger.Log("");
+                this.config.Logger.Log("--------------------------------------------------------------");
             });
     }
 
@@ -109,8 +100,6 @@ class QikTrakHasura {
     //              we want to surface JSON values as SQL data, else GraphQL can't see it or query it.
     //
     async generateJsonView(view) {
-        this.Logger.Log("    CREATE VIEW - " + view.name);
-
         if (view.relationships) {
             view.relationships.map(relationship => {
                 this.config.relationships.push({ ...relationship, srcTable: view.name });
@@ -156,7 +145,7 @@ COMMENT ON VIEW "${this.config.targetSchema}"."${view.name}" IS '${view.descript
 
         await this.Hasura.runSQL_Query(sql_statement)
             .then(() => {
-                this.Logger.Log("Created ${view.name}")
+                this.config.Logger.Log("Created ${view.name}")
             });
     }
 }

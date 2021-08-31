@@ -9,8 +9,6 @@ const QikTrakHasura = require("./qik-trak-hasura");
 // The code also creates SQL views which can translate JSON values into SQL data columns
 //
 
-const fs = require('fs');
-
 
 class QikTrack {
 
@@ -20,6 +18,8 @@ class QikTrack {
         this.Logger = new QikTrakLogger(cfg);
         this.Hasura = new QikTrakHasura(cfg);
         
+        this.config.Logger = this.Logger;
+
         // --------------------------------------------------------------------------------------------------------------------------
         // SQL to acquire metadata
 
@@ -75,12 +75,26 @@ class QikTrack {
                     // Drop tracking information for all tables / views, this will also untrack any relationships
                     await this.untrackTables(tables);
                 });
+
+                this.Logger.Log("");
+        }
+
+        if (this.config.operations.executeSqlScripts) {
+            this.Logger.Log("EXECUTE SQL SCRIPTS BEFORE VIEW BUILDER");
+            await this.executeScriptsBeforeViewBuilder();
+            this.Logger.Log("");
         }
 
         if (this.config.operations.createJsonViews) {
-            await this.executeScriptsBeforeViewBuilder();
+            this.Logger.Log("GENERATE JSON VIEWS");
             await this.createJsonViews();
+            this.Logger.Log("");
+        }
+
+        if (this.config.operations.executeSqlScripts) {
+            this.Logger.Log("EXECUTE SQL SCRIPTS AFTER VIEW BUILDER");
             await this.executeScriptsAfterViewBuilder();
+            this.Logger.Log("");
         }
 
         if (this.config.operations.trackTables) {
@@ -311,31 +325,36 @@ class QikTrack {
     // --------------------------------------------------------------------------------------------------------------------------
     // Execute SQL scripts required before view creation
     async executeScriptsBeforeViewBuilder() {
-        this.Logger.Log("EXECUTE SCRIPTS BEFORE VIEWS ARE BUILT");
-
         if (this.config.scripts && this.config.scripts.beforeViews) {
-            await this.executeScripts(this.config.scripts.beforeViews);
+          
+            this.config.scripts.beforeViews.map(async (script) => {
+                await this.Hasura.executeSqlScript(script);
+                this.Logger.Log("    EXECUTED           - " + script);
+            });
         }
     }
 
     // --------------------------------------------------------------------------------------------------------------------------
     // Execute SQL scripts required after view creation
     async executeScriptsAfterViewBuilder() {
-        this.Logger.Log("EXECUTE SCRIPTS AFTER VIEWS ARE BUILT");
-
         if (this.config.scripts && this.config.scripts.afterViews) {
-            await this.executeScripts(this.config.scripts.afterViews);
+            
+            this.config.scripts.afterViews.map(async (script) => {
+                await this.Hasura.executeSqlScript(script);
+                this.Logger.Log("    EXECUTED       - " + script);
+            });
         }
     }
 
     //--------------------------------------------------------------------------------------------------------------------------
     // Create Postgres views that flatten JSON payloads into SQL columns
     async createJsonViews() {
-        this.Logger.Log("CREATE JSON VIEWS");
-
-        this.config.views.map(async (view) => {
-            await this.Hasura.generateJsonView(view);
-        });
+        if (this.config.views) {
+            this.config.views.map(async (view) => {
+                await this.Hasura.generateJsonView(view);
+                this.Logger.Log("    BUILT          - " + view.name);
+            });
+        }
     }
 
     //#endregion
