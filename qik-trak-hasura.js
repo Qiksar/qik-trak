@@ -231,9 +231,10 @@ COMMENT ON VIEW "${this.config.targetSchema}"."${view.name}" IS '${view.descript
 
         await this.runSQL_Query(sql_statement);
 
-        if (true && view.relationships) {
+        // Relationship tracking has to be deferred until trable tracking is complete
+        if (view.relationships) {
             view.relationships.map(async (relationship) => {
-                await this.createRelationships(relationship);
+                this.config.JsonViews.push(relationship);
             });
         }
     }

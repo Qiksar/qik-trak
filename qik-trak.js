@@ -12,10 +12,14 @@ const QikTrakHasura = require("./qik-trak-hasura");
 class QikTrack {
 
     constructor(cfg){
-        this.config = cfg;
-        this.Logger = new QikTrakLogger(cfg);
-        this.Hasura = new QikTrakHasura(cfg);
-        
+        this.config = 
+            {
+            ...cfg,
+            JsonViews:[]
+            };
+
+        this.Logger = new QikTrakLogger(this.config);
+        this.Hasura = new QikTrakHasura(this.config);
         this.config.Logger = this.Logger;
 
         // --------------------------------------------------------------------------------------------------------------------------
@@ -130,6 +134,11 @@ class QikTrack {
                     await this.trackRelationships(foreignKeys);
                     this.Logger.Log("");
                 });
+
+            // track relationships created by JSON views
+            this.config.JsonViews.map(async(relationship) =>{
+                await this.createRelationships(relationship);
+            });
         }
     }
 
