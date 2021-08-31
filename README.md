@@ -64,7 +64,7 @@ npm run
 
 or:
 
-node cli.js
+node qik-trak-cli.js
 
 or
 

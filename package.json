@@ -4,12 +4,12 @@
   "description": "Automatically configure Hasura tracking and generate additional tracked SQL views, e.g. views which can expose JSON data as SQL columns",
   "main": "index.js",
   "bin": {
-    "qik-track": "./cli.js"
+    "qik-track": "./qik-trak-cli.js"
   },
   "author": "NamSource Pty Ltd - www.namsource.com",
   "license": "GPL-3.0",
   "scripts": {
-    "start_cli": "node cli.js"
+    "start_cli": "node qik-trak-cli.js"
   },
   "dependencies": {
     "axios": "^0.21.1",
