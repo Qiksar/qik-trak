@@ -29,6 +29,8 @@ const cfg = {
       afterViews:[]
     },
 
+    views: [],
+
     logOutput: true,
     hasuraAdminSecret: process.env.HASURA_GRAPHQL_ADMIN_SECRET,
     hasuraEndpoint: process.env.HASURA_GRAPHQL_ENDPOINT,
@@ -42,6 +44,11 @@ const cfg = {
     
     if (process.env.AFTER_SCRIPTS_FOLDER)
       cfg.scripts.afterViews = getFiles(process.env.AFTER_SCRIPTS_FOLDER, "sql");
+  }
+  
+  if(cfg.operations.createJsonViews) {
+    if (process.env.JSON_VIEWS_FOLDER)
+      cfg.views = getFiles(process.env.JSON_VIEWS_FOLDER, "json");
   }
 
 new QikTrak(cfg).ExecuteQikTrack()

@@ -1,4 +1,3 @@
-const QikTrakNames = require("./qik-trak-names");
 const QikTrakLogger = require("./qik-trak-logger");
 const QikTrakHasura = require("./qik-trak-hasura");
 
@@ -14,7 +13,6 @@ class QikTrack {
 
     constructor(cfg){
         this.config = cfg;
-        this.Namer = new QikTrakNames(cfg);
         this.Logger = new QikTrakLogger(cfg);
         this.Hasura = new QikTrakHasura(cfg);
         
@@ -51,12 +49,12 @@ class QikTrack {
 
         this.Logger.Log("--------------------------------------------------------------");
         this.Logger.Log("");
-        this.Logger.Log("        qik-track          : Rapid, intuitive Hasura tracking setup");
+        this.Logger.Log("qik-track          : Rapid, intuitive Hasura tracking setup");
         this.Logger.Log("");
-        this.Logger.Log("        DATABASE           : '" + this.config.targetDatabase + "'");
-        this.Logger.Log("        SCHEMA             : '" + this.config.targetSchema + "'");
-        this.Logger.Log("        HASURA ENDPOINT    : '" + this.config.hasuraEndpoint + "'");
-        this.Logger.Log("        PRIMARY KEY SUFFIX : '" + this.config.primaryKeySuffix + "'");
+        this.Logger.Log("DATABASE           : '" + this.config.targetDatabase + "'");
+        this.Logger.Log("SCHEMA             : '" + this.config.targetSchema + "'");
+        this.Logger.Log("HASURA ENDPOINT    : '" + this.config.hasuraEndpoint + "'");
+        this.Logger.Log("PRIMARY KEY SUFFIX : '" + this.config.primaryKeySuffix + "'");
         this.Logger.Log("");
         this.Logger.Log("--------------------------------------------------------------");
         this.Logger.Log("");
@@ -120,12 +118,10 @@ class QikTrack {
                     var foreignKeys = results.splice(1)
                         .map(fk => {
                             return {
-                                table1: fk[0],
-                                key1: fk[1],
-                                table2: fk[2],
-                                key2: fk[3],
-                                addArrayRelationship: true,
-                                addObjectRelationship: true
+                                referencing_table: fk[0],
+                                referencing_key: fk[1],
+                                referenced_table: fk[2],
+                                referenced_key: fk[3]
                             };
                         });
 
@@ -240,81 +236,8 @@ class QikTrack {
         this.Logger.Log("Configure HASURA RELATIONSHIP TRACKING");
 
         relationships.map(async (relationship) => {
-            await this.createRelationships(relationship);
+            await this.Hasura.createRelationships(relationship);
         });
-    }
-
-    async createRelationships(relationship) {
-        if (relationship.addArrayRelationship) {
-            const array_rel_spec = {
-                type: "pg_create_array_relationship",
-                
-                args: {
-                    name: this.Namer.getArrayRelationshipName(relationship),
-
-                    table: {
-                        schema: this.config.targetSchema,
-                        name: relationship.table2
-                    },
-                    
-                    using: {
-                        foreign_key_constraint_on: {
-                            table: {
-                                schema: this.config.targetSchema,
-                                name:  relationship.table1
-                            },
-                            columns: [relationship.key1]
-                            }
-                    }
-                }
-            };
-
-            this.Logger.Log("    ARRAY RELATIONSHIP - " + array_rel_spec.args.name + " -> " + relationship.table1 + " where " + relationship.table1 + "." + relationship.key1 + " matches " + relationship.table2 + "." +  relationship.key2);
-            await this.createRelationship(array_rel_spec);
-        }
-
-        if (relationship.addObjectRelationship) {
-            const obj_rel_spec = {
-                type: "pg_create_object_relationship",
-              
-                args: {
-                    name: this.Namer.getObjectRelationshipName(relationship),
-
-                    table: {
-                        schema: this.config.targetSchema,
-                        name:  relationship.table1
-                    },
-
-                    using: {
-                       foreign_key_constraint_on: relationship.key1
-                    }
-                }
-            };
-
-            this.Logger.Log("   OBJECT RELATIONSHIP - " + obj_rel_spec .args.name + " is " + relationship.table1 + " referencing " + relationship.table2 + " using " +  relationship.key1);
-            await this.createRelationship(obj_rel_spec);
-        }
-    }
-
-    // --------------------------------------------------------------------------------------------------------------------------
-    // Create the specified relationship
-    async createRelationship(relSpec) {
-        await this.Hasura.runGraphQL_Query('/v1/metadata', relSpec)
-            .catch(e => {
-
-                if (e.response.data.error.includes("already exists")) {
-                    return;
-                }
-
-                this.Logger.Log("GRAPHQL QUERY FAILED TO EXECUTE: ");
-                this.Logger.Log("");
-                this.Logger.Log(JSON.stringify(relSpec));
-                this.Logger.Log("");
-                this.Logger.Log("EXCEPTION DETAILS - creating " + relSpec.type + " - " + relSpec.args.name);
-                this.Logger.Log("");
-                this.Logger.Log(e.response.data);
-                this.Logger.Log("");
-            });
     }
 
     //#endregion
@@ -350,9 +273,9 @@ class QikTrack {
     // Create Postgres views that flatten JSON payloads into SQL columns
     async createJsonViews() {
         if (this.config.views) {
-            this.config.views.map(async (view) => {
-                await this.Hasura.generateJsonView(view);
-                this.Logger.Log("    BUILT          - " + view.name);
+            this.config.views.map(async (viewFile) => {
+                await this.Hasura.generateJsonView(viewFile);
+                this.Logger.Log("    BUILT              - " + viewFile);
             });
         }
     }
