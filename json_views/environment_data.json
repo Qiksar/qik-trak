@@ -2,7 +2,7 @@
     "views": 
     [
         {
-        "name": "environment_data",
+        "name": "iot_environment",
         "description": "Convert environmental monitoring JSON data into SQL columns",
         "query": {
             "select": "SELECT message_id, membership.iot_messages.created_at",

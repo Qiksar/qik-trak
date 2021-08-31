@@ -2,7 +2,7 @@
     "views": 
     [
         {
-        "name": "smart_watch_data",
+        "name": "iot_smart_watch",
         "description": "Convert smart watch JSON data into SQL columns",
         "query": {
             "select": "SELECT message_id, membership.iot_messages.created_at",
