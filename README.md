@@ -123,11 +123,11 @@ CONFIGURE HASURA TABLE/VIEW TRACKING
     TRACK TABLE        - roles
     TRACK TABLE        - status
 
-CONFIGURE HASURA RELATIONSHIP TRACKING
-    ARRAY RELATIONSHIP - status_members : Lookup all members where status_id matches status
-    ARRAY RELATIONSHIP - role_members : Lookup all members where role_id matches roles
-    ARRAY RELATIONSHIP - group_members : Lookup all members where group_id matches groups
-    ARRAY RELATIONSHIP - leader_groups : Lookup all groups where leader_id matches members
+Configure HASURA RELATIONSHIP TRACKING
+    ARRAY RELATIONSHIP - status -> members where members.status_id matches status.name
+    ARRAY RELATIONSHIP - role -> members where members.role_id matches roles.name
+    ARRAY RELATIONSHIP - group -> members where members.group_id matches groups.group_id
+    ARRAY RELATIONSHIP - leader -> groups where groups.leader_id matches members.member_id
 
    OBJECT RELATIONSHIP - status is members referencing status using status_id
    OBJECT RELATIONSHIP - group is members referencing groups using group_id
