@@ -34,7 +34,7 @@
         "relationships": [
             {
                 "name": "source_message",
-                "referencing_table": "environment_data",
+                "referencing_table": "iot_environment",
                 "referencing_key": "message_id",
                 "referenced_table": "iot_messages",
                 "referenced_key": "message_id"

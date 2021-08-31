@@ -39,7 +39,7 @@
         "relationships": [
             {
                 "name": "source_message",
-                "referencing_table": "smart_watch_data",
+                "referencing_table": "iot_smart_watch",
                 "referencing_key": "message_id",
                 "referenced_table": "iot_messages",
                 "referenced_key": "message_id"
