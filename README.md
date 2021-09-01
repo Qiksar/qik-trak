@@ -16,8 +16,8 @@ Skip to the end to see sample output, this might give you an instant idea of wha
 
 ### Introductory videos
 
-PART1: Up and running in one click!  https://www.youtube.com/watch?v=L-CxgGT1dVA
-PART2: How to surface JSON data      https://www.youtube.com/watch?v=pVQKmJg2q8k
+* PART1: Up and running in one click!  https://www.youtube.com/watch?v=L-CxgGT1dVA
+* PART2: How to surface JSON data      https://www.youtube.com/watch?v=pVQKmJg2q8k
 
 All you need is (most likely already have) is a postgres database with Hasura. 
 
