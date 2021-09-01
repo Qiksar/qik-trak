@@ -14,6 +14,11 @@ Skip to the end to see sample output, this might give you an instant idea of wha
 
 ## What you need to get started
 
+### Introductory videos
+
+PART1: Up and running in one click!  https://www.youtube.com/watch?v=L-CxgGT1dVA
+PART2: How to surface JSON data      https://www.youtube.com/watch?v=pVQKmJg2q8k
+
 All you need is (most likely already have) is a postgres database with Hasura. 
 
 **WARNING**: This tool will remove all of the current tracking data (if any exists) and will then implement tracking with names that closely match the naming convention of your database.
