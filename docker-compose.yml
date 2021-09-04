@@ -33,13 +33,20 @@ services:
 
     restart: always
 
+<<<<<<< HEAD
   qik-trak:
     env_file: .env
     environment: 
       - IN_CONTAINER=true
+=======
+# Use this if you want to build the app into a container that you can run from the docker
+#  qik-trak:
+#    env_file: .env
+>>>>>>> 5be04e37e07a4ff127d8bf97465e748a8c061761
 
-    container_name: qik-trak
+#    container_name: qik-trak
 
+<<<<<<< HEAD
     build:
       context: .
       dockerfile: ./Dockerfile
@@ -47,7 +54,16 @@ services:
     links:
       - qiktrak_db
       - qiktrak_gql
+=======
+#    build:
+#      context: .
+#      dockerfile: ./Dockerfile
+    
+#    links: 
+#      - qiktrak_db
+#      - qiktrak_gql
+>>>>>>> 5be04e37e07a4ff127d8bf97465e748a8c061761
 
-    command:
-      - node
-      - cli.js
+#    command:
+#      - node
+#      - cli.js

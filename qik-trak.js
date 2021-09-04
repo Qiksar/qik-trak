@@ -1,7 +1,5 @@
-const axios = require("axios");
-const NamesHelper = require("./qik-trak-names");
-
-const QikTrakNames = new NamesHelper();
+const QikTrakLogger = require("./qik-trak-logger");
+const QikTrakHasura = require("./qik-trak-hasura");
 
 //
 // The purpose of this code is to allow the caller to track all Postgres tables, views and relationships with a single call
@@ -10,12 +8,11 @@ const QikTrakNames = new NamesHelper();
 // The code also creates SQL views which can translate JSON values into SQL data columns
 //
 
-const fs = require('fs');
-
 
 class QikTrack {
 
     constructor(cfg){
+<<<<<<< HEAD
         this.config = cfg;
 
         if (!cfg.primaryKeySuffix) {
@@ -87,6 +84,17 @@ AND tc.table_schema = '${this.config.targetSchema}'
         var tables = results
             .map(t => t[0])
             .splice(1);
+=======
+        this.config = 
+            {
+            ...cfg,
+            JsonViews:[]
+            };
+
+        this.Logger = new QikTrakLogger(this.config);
+        this.Hasura = new QikTrakHasura(this.config);
+        this.config.Logger = this.Logger;
+>>>>>>> 5be04e37e07a4ff127d8bf97465e748a8c061761
 
         // --------------------------------------------------------------------------------------------------------------------------
         // Drop tracking information for all tables / views, this will also untrack any relationships
@@ -94,6 +102,7 @@ AND tc.table_schema = '${this.config.targetSchema}'
     });
 }
 
+<<<<<<< HEAD
     async runTrackTables(){
 
     if (!this.config.operations.trackTables)
@@ -105,6 +114,85 @@ AND tc.table_schema = '${this.config.targetSchema}'
             var tables = results
                 .map(t => t[0])
                 .splice(1);
+=======
+        this.table_sql =
+`
+ SELECT table_name FROM information_schema.tables WHERE table_schema = '${this.config.targetSchema}'
+ UNION
+ SELECT table_name FROM information_schema.views WHERE table_schema = '${this.config.targetSchema}'
+ ORDER BY table_name;
+ `;
+
+        this.foreignKey_sql =
+`
+ SELECT tc.table_name, kcu.column_name, ccu.table_name AS foreign_table_name, ccu.column_name AS foreign_column_name 
+ FROM information_schema.table_constraints AS tc 
+ JOIN information_schema.key_column_usage AS kcu ON tc.constraint_name = kcu.constraint_name AND kcu.constraint_schema = '${this.config.targetSchema}'
+ JOIN information_schema.constraint_column_usage AS ccu ON ccu.constraint_name = tc.constraint_name AND ccu.constraint_schema = '${this.config.targetSchema}'
+ WHERE constraint_type = 'FOREIGN KEY' 
+ AND tc.table_schema = '${this.config.targetSchema}'
+ ;`;
+    }
+
+    //---------------------------------------------------------------------------------------------------------------------------
+    // Entry point
+    async ExecuteQikTrack() {
+        if (!this.config.primaryKeySuffix) {
+            this.config.primaryKeySuffix = "_id";
+        }
+
+        this.Logger.Log("--------------------------------------------------------------");
+        this.Logger.Log("");
+        this.Logger.Log("qik-track          : Rapid, intuitive Hasura tracking setup");
+        this.Logger.Log("");
+        this.Logger.Log("DATABASE           : '" + this.config.targetDatabase + "'");
+        this.Logger.Log("SCHEMA             : '" + this.config.targetSchema + "'");
+        this.Logger.Log("HASURA ENDPOINT    : '" + this.config.hasuraEndpoint + "'");
+        this.Logger.Log("PRIMARY KEY SUFFIX : '" + this.config.primaryKeySuffix + "'");
+        this.Logger.Log("");
+        this.Logger.Log("--------------------------------------------------------------");
+        this.Logger.Log("");
+
+
+        if (this.config.operations.untrack) {
+
+            await this.Hasura.runSQL_Query(this.table_sql)
+                .then(async (results) => {
+
+                    var tables = results
+                        .map(t => t[0])
+                        .splice(1);
+
+                    // --------------------------------------------------------------------------------------------------------------------------
+                    // Drop tracking information for all tables / views, this will also untrack any relationships
+                    await this.untrackTables(tables);
+                });
+
+                this.Logger.Log("");
+        }
+
+        if (this.config.operations.executeSqlScripts) {
+            this.Logger.Log("EXECUTE SQL SCRIPTS BEFORE VIEW BUILDER");
+            await this.executeScriptsBeforeViewBuilder();
+            this.Logger.Log("");
+        }
+
+        if (this.config.operations.createJsonViews) {
+            this.Logger.Log("GENERATE JSON VIEWS");
+            await this.createJsonViews();
+            this.Logger.Log("");
+        }
+
+        if (this.config.operations.executeSqlScripts) {
+            this.Logger.Log("EXECUTE SQL SCRIPTS AFTER VIEW BUILDER");
+            await this.executeScriptsAfterViewBuilder();
+            this.Logger.Log("");
+        }
+
+        if (this.config.operations.trackTables) {
+            await this.Hasura.runSQL_Query(this.table_sql)
+                .then(async (results) => {
+>>>>>>> 5be04e37e07a4ff127d8bf97465e748a8c061761
 
             // --------------------------------------------------------------------------------------------------------------------------
             // Configure HASURA to track all TABLES and VIEWS - tables and views are added to the GraphQL schema automatically
@@ -133,6 +221,7 @@ AND tc.table_schema = '${this.config.targetSchema}'
                     };
                 });
 
+<<<<<<< HEAD
             // --------------------------------------------------------------------------------------------------------------------------
             // Configure HASURA to track all FOREIGN KEY RELATIONSHIPS - enables GraphQL to fetch related (nested) entities
             await this.trackRelationships(foreignKeys);
@@ -146,15 +235,46 @@ AND tc.table_schema = '${this.config.targetSchema}'
 
     //#endregion
 
+=======
+        if (this.config.operations.trackRelationships) {
+
+            // Create the list of relationships required by foreign keys
+            await this.Hasura.runSQL_Query(this.foreignKey_sql)
+                .then(async (results) => {
+
+                    var foreignKeys = results.splice(1)
+                        .map(fk => {
+                            return {
+                                referencing_table: fk[0],
+                                referencing_key: fk[1],
+                                referenced_table: fk[2],
+                                referenced_key: fk[3]
+                            };
+                        });
+
+                    // --------------------------------------------------------------------------------------------------------------------------
+                    // Configure HASURA to track all FOREIGN KEY RELATIONSHIPS - enables GraphQL to fetch related (nested) entities
+                    await this.trackRelationships(foreignKeys);
+                    this.Logger.Log("");
+                });
+
+            // track relationships created by JSON views
+            this.config.JsonViews.map(async(relationship) =>{
+                await this.createRelationships(relationship);
+            });
+        }
+    }
+
+>>>>>>> 5be04e37e07a4ff127d8bf97465e748a8c061761
     //#region Table Tracking
 
     // --------------------------------------------------------------------------------------------------------------------------
     // Configure HASURA to track all tables and views in the specified schema 
     async untrackTables(tables) {
-        this.tracker_log("REMOVE PREVIOUS HASURA TRACKING DETAILS FOR TABLES AND VIEWS");
+        this.Logger.Log("REMOVE PREVIOUS HASURA TRACKING DETAILS FOR TABLES AND VIEWS");
 
         tables.map(async (table_name) => {
-            this.tracker_log("    UNTRACK TABLE      - " + table_name);
+            this.Logger.Log("    UNTRACK TABLE      - " + table_name);
 
             var query = {
                 type: "pg_untrack_table",
@@ -168,30 +288,30 @@ AND tc.table_schema = '${this.config.targetSchema}'
                 }
             };
 
-            await this.runGraphQL_Query('/v1/metadata',  query)
+            await this.Hasura.runGraphQL_Query('/v1/metadata',  query)
                 .catch(e => {
                     if (e.response.data.error.includes("already untracked")) {
                         return;
                     }
 
-                    this.tracker_log("");
-                    this.tracker_log("");
-                    this.tracker_log("--------------------------------------------------------------");
-                    this.tracker_log("");
-                    this.tracker_log("QIK-TRAK: ERROR");
-                    this.tracker_log("");
-                    this.tracker_log("GRAPHQL QUERY FAILED TO EXECUTE");
-                    this.tracker_log("");
-                    this.tracker_log("Error Message : " + e.response.data.internal.error.message);
-                    this.tracker_log(e.response.request.data);
-                    this.tracker_log("");
-                    this.tracker_log("Query:");
-                    this.tracker_log("");
-                    this.tracker_log(JSON.stringify(query));
-                    this.tracker_log("");
-                    this.tracker_log("Are Hasura and the database fully initialised?");
-                    this.tracker_log("");
-                    this.tracker_log("--------------------------------------------------------------");
+                    this.Logger.Log("");
+                    this.Logger.Log("");
+                    this.Logger.Log("--------------------------------------------------------------");
+                    this.Logger.Log("");
+                    this.Logger.Log("QIK-TRAK: ERROR");
+                    this.Logger.Log("");
+                    this.Logger.Log("GRAPHQL QUERY FAILED TO EXECUTE");
+                    this.Logger.Log("");
+                    this.Logger.Log("Error Message : " + e.response.data.internal.error.message);
+                    this.Logger.Log(e.response.request.data);
+                    this.Logger.Log("");
+                    this.Logger.Log("Query:");
+                    this.Logger.Log("");
+                    this.Logger.Log(JSON.stringify(query));
+                    this.Logger.Log("");
+                    this.Logger.Log("Are Hasura and the database fully initialised?");
+                    this.Logger.Log("");
+                    this.Logger.Log("--------------------------------------------------------------");
                 });;
         });
     }
@@ -200,11 +320,11 @@ AND tc.table_schema = '${this.config.targetSchema}'
     // --------------------------------------------------------------------------------------------------------------------------
     // Configure HASURA to track all tables and views in the specified schema 
     async trackTables(tables) {
-        this.tracker_log("");
-        this.tracker_log("Configure HASURA TABLE/VIEW TRACKING");
+        this.Logger.Log("");
+        this.Logger.Log("Configure HASURA TABLE/VIEW TRACKING");
 
         tables.map(async (table_name) => {
-            this.tracker_log("    TRACK TABLE        - " + table_name);
+            this.Logger.Log("    TRACK TABLE        - " + table_name);
 
             var query = {
                 type: "pg_track_table",
@@ -218,13 +338,18 @@ AND tc.table_schema = '${this.config.targetSchema}'
                 }
             };
 
+<<<<<<< HEAD
             await this.runGraphQL_Query('/v1/metadata', query)
             .catch(e => {
+=======
+            await this.Hasura.runGraphQL_Query('/v1/metadata', query).catch(e => {
+>>>>>>> 5be04e37e07a4ff127d8bf97465e748a8c061761
 
                 if (e.response.data.error.includes("already tracked")) {
                     return;
                 }
 
+<<<<<<< HEAD
                 this.tracker_log("GRAPHQL QUERY FAILED TO EXECUTE: ");
                 this.tracker_log("");
                 this.tracker_log(JSON.stringify(query));
@@ -234,6 +359,17 @@ AND tc.table_schema = '${this.config.targetSchema}'
                 this.tracker_log(e.response.request.data);
                 this.tracker_log("");
             });
+=======
+                this.Logger.Log("GRAPHQL QUERY FAILED TO EXECUTE: ");
+                this.Logger.Log("");
+                this.Logger.Log(JSON.stringify(query));
+                this.Logger.Log("");
+                this.Logger.Log("EXCEPTION DETAILS - creating " + currentRelationshipType + " - " + currentRelationshipName);
+                this.Logger.Log("");
+                this.Logger.Log(e.response.request.data);
+                this.Logger.Log("");
+            });;
+>>>>>>> 5be04e37e07a4ff127d8bf97465e748a8c061761
         });
     }
 
@@ -246,85 +382,12 @@ AND tc.table_schema = '${this.config.targetSchema}'
     // Configure HASURA to track all relationships
     // This requires an array relationship in one direction and an object relationship in the opposite direction
     async trackRelationships(relationships) {
-        this.tracker_log("");
-        this.tracker_log("Configure HASURA RELATIONSHIP TRACKING");
+        this.Logger.Log("");
+        this.Logger.Log("Configure HASURA RELATIONSHIP TRACKING");
 
         relationships.map(async (relationship) => {
-            await this.createRelationships(relationship);
+            await this.Hasura.createRelationships(relationship);
         });
-    }
-
-    async createRelationships(relationship) {
-        if (relationship.addArrayRelationship) {
-            const array_rel_spec = {
-                type: "pg_create_array_relationship",
-                
-                args: {
-                    name: QikTrakNames.getArrayRelationshipName(this.config, relationship),
-
-                    table: {
-                        schema: this.config.targetSchema,
-                        name: relationship.table2
-                    },
-                    
-                    using: {
-                        foreign_key_constraint_on: {
-                            table: {
-                                schema: this.config.targetSchema,
-                                name:  relationship.table1
-                            },
-                            columns: [relationship.key1]
-                            }
-                    }
-                }
-            };
-
-            this.tracker_log("    ARRAY RELATIONSHIP - " + array_rel_spec.args.name + " -> " + relationship.table1 + " where " + relationship.table1 + "." + relationship.key1 + " matches " + relationship.table2 + "." +  relationship.key2);
-            await this.createRelationship(array_rel_spec);
-        }
-
-        if (relationship.addObjectRelationship) {
-            const obj_rel_spec = {
-                type: "pg_create_object_relationship",
-              
-                args: {
-                    name: QikTrakNames.getObjectRelationshipName(this.config, relationship),
-
-                    table: {
-                        schema: this.config.targetSchema,
-                        name:  relationship.table1
-                    },
-
-                    using: {
-                       foreign_key_constraint_on: relationship.key1
-                    }
-                }
-            };
-
-            this.tracker_log("   OBJECT RELATIONSHIP - " + obj_rel_spec .args.name + " is " + relationship.table1 + " referencing " + relationship.table2 + " using " +  relationship.key1);
-            await this.createRelationship(obj_rel_spec);
-        }
-    }
-
-    // --------------------------------------------------------------------------------------------------------------------------
-    // Create the specified relationship
-    async createRelationship(relSpec) {
-        await this.runGraphQL_Query('/v1/metadata', relSpec)
-            .catch(e => {
-
-                if (e.response.data.error.includes("already exists")) {
-                    return;
-                }
-
-                this.tracker_log("GRAPHQL QUERY FAILED TO EXECUTE: ");
-                this.tracker_log("");
-                this.tracker_log(JSON.stringify(relSpec));
-                this.tracker_log("");
-                this.tracker_log("EXCEPTION DETAILS - creating " + relSpec.type + " - " + relSpec.args.name);
-                this.tracker_log("");
-                this.tracker_log(e.response.data);
-                this.tracker_log("");
-            });
     }
 
     //#endregion
@@ -332,187 +395,38 @@ AND tc.table_schema = '${this.config.targetSchema}'
 
     //#region View Generation
 
+    // --------------------------------------------------------------------------------------------------------------------------
+    // Execute SQL scripts required before view creation
+    async executeScriptsBeforeViewBuilder() {
+        if (this.config.scripts && this.config.scripts.beforeViews) {
+          
+            this.config.scripts.beforeViews.map(async (script) => {
+                await this.Hasura.executeSqlScript(script);
+                this.Logger.Log("    EXECUTED           - " + script);
+            });
+        }
+    }
+
+    // --------------------------------------------------------------------------------------------------------------------------
+    // Execute SQL scripts required after view creation
+    async executeScriptsAfterViewBuilder() {
+        if (this.config.scripts && this.config.scripts.afterViews) {
+            
+            this.config.scripts.afterViews.map(async (script) => {
+                await this.Hasura.executeSqlScript(script);
+                this.Logger.Log("    EXECUTED       - " + script);
+            });
+        }
+    }
+
     //--------------------------------------------------------------------------------------------------------------------------
     // Create Postgres views that flatten JSON payloads into SQL columns
-    async generateViews() {
-        // --------------------------------------------------------------------------------------------------------------------------
-        // Execute SQL scripts required before view creation
-        if (this.config.scripts && this.config.scripts.beforeViews) {
-            this.executeScripts(this.config.scripts.beforeViews);
-        }
-
-        this.tracker_log("CREATE SQL VIEWS");
-
-        this.config.views.map((view) => {
-            this.generateView(view);
-        });
-
-        // --------------------------------------------------------------------------------------------------------------------------
-        // Execute SQL scripts required after view creation
-        if (this.config.scripts && this.config.scripts.afterViews) {
-            await this.executeScripts(this.config.scripts.afterViews);
-        }
-    }
-
-
-    //--------------------------------------------------------------------------------------------------------------------------
-    // Create the view: DROP if exists, create view, add comment to view
-    async generateView(view) {
-        this.tracker_log("    CREATE VIEW - " + view.name);
-
-        if (view.relationships) {
-            view.relationships.map(relationship => {
-                this.config.relationships.push({ ...relationship, srcTable: view.name });
+    async createJsonViews() {
+        if (this.config.views) {
+            this.config.views.map(async (viewFile) => {
+                await this.Hasura.generateJsonView(viewFile);
+                this.Logger.Log("    BUILT              - " + viewFile);
             });
-        }
-
-        const view_header =
-            `
-DROP VIEW IF EXISTS "${this.config.targetSchema}"."${view.name}";
-CREATE VIEW "${this.config.targetSchema}"."${view.name}" AS
-`;
-
-        const view_footer =
-            `
-COMMENT ON VIEW "${this.config.targetSchema}"."${view.name}" IS '${view.description}';
-`;
-
-        // Build the SQL statement according to the specified JSON columns
-        // The columns list is optional
-        var view_columns = ""
-
-        if (view.columns) {
-            var view_columns = ","
-
-            view.columns.jsonValues.map(col => {
-                view_columns +=
-                    `
-CAST(${view.columns.jsonColumn} ->> '${col.jsonName}' AS ${col.sqlType}) AS "${col.sqlName}",`;
-            });
-
-        }
-
-        var sql_statement = `
- ${view_header}
- ${view.query.select.trim().replace(/,\s*$/, "")}
- ${view_columns.trim().replace(/,\s*$/, "")}
- ${view.query.from}
- ${view.query.join}
- ${view.query.where}
- ${view.query.orderBy};
- ${view_footer};`;
-
-        await this.runSQL_Query(sql_statement)
-            .then(() => {
-                this.tracker_log("Created ${view.name}")
-            });
-    }
-
-    //#endregion
-
-
-    //#region Hasura API Calls
-
-    //--------------------------------------------------------------------------------------------------------------------------
-    // Execute a list of SQL scripts
-    async executeScripts(scripts) {
-        this.tracker_log("");
-        this.tracker_log("EXECUTE SQL SCRIPTS");
-
-        scripts.map(async (s) => {
-
-            var content = fs.readFileSync(s.source, { encoding: "utf8" });
-            this.tracker_log("    EXECUTE SQL SCRIPT - " + s.source);
-
-            if (content.trim().length > 0) {
-                await this.runSQL_Query(content);
-            }
-
-        });
-
-        this.tracker_log("");
-    }
-
-
-    //--------------------------------------------------------------------------------------------------------------------------
-    // Execute a Postgres SQL query via the Hasura API
-    async runSQL_Query(sql_statement) {
-        if (!sql_statement)
-            throw ("sql_statement is required");
-
-        var sqlQuery = {
-            type: "run_sql",
-            args: {
-                sql: sql_statement
-            }
-        };
-
-        return await this.runGraphQL_Query('/v2/query', sqlQuery)
-            .then(results => {
-                return results.data.result;
-            }).catch(e => {
-                this.tracker_log("");
-                this.tracker_log("");
-                this.tracker_log("--------------------------------------------------------------");
-                this.tracker_log("");
-                this.tracker_log("QIK-TRAK: ERROR");
-                this.tracker_log("");
-                this.tracker_log("SQL QUERY FAILED TO EXECUTE: ");
-                this.tracker_log("");
-                this.tracker_log("ENDPOINT ADDRESS : " + this.config.hasuraEndpoint);
-                this.tracker_log("");
-
-                if (!e.response)
-                    this.tracker_log("Error Message : " + e);
-                else
-                    this.tracker_log("Error Message : " + e.response.data.internal.error.message);
-
-                this.tracker_log("");
-                this.tracker_log("SQL Statement:");
-                this.tracker_log("");
-                this.tracker_log(sql_statement);
-                this.tracker_log("");
-                this.tracker_log("Check for SQL syntax errors. Test the query in your admin tool.");
-                this.tracker_log("");
-                this.tracker_log("--------------------------------------------------------------");
-            });
-    }
-
-
-    //--------------------------------------------------------------------------------------------------------------------------
-    // Execute a GraphQL query via the Hasura API
-    async runGraphQL_Query(endpoint, query) {
-        if (!query)
-            throw ("query is required");
-
-        if (!endpoint)
-            throw ("endpoint is required");
-
-        if (!this.config.hasuraAdminSecret)
-            throw ("hasuraAdminSecret is required");
-
-        const requestConfig = {
-            headers: {
-                'X-Hasura-Admin-Secret': this.config.hasuraAdminSecret,
-            }
-        }
-
-        return await axios.post(this.config.hasuraEndpoint + endpoint, query, requestConfig)
-            .then(result => {
-                return result;
-            });
-    }
-
-    //#endregion
-
-
-    //#region Utilities
-
-    //--------------------------------------------------------------------------------------------------------------------------
-    // Write log text if output is requested by the this.config
-    tracker_log(text) {
-        if (this.config.logOutput) {
-            console.log(text);
         }
     }
 

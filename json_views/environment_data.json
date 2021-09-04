@@ -1,0 +1,45 @@
+{
+    "views": 
+    [
+        {
+        "name": "iot_environment",
+        "description": "Convert environmental monitoring JSON data into SQL columns",
+        "query": {
+            "select": "SELECT message_id, membership.iot_messages.created_at",
+            "from": "FROM membership.iot_messages",
+            "join": "INNER JOIN membership.iot_devices ON membership.iot_devices.device_id = membership.iot_messages.device_id INNER JOIN membership.iot_device_types ON membership.iot_device_types.name = membership.iot_devices.device_type_id", 
+            "where": "WHERE device_type_id = 'ENV'",
+            "orderBy": "ORDER BY membership.iot_messages.created_at"
+        },
+        "columns": {
+            "jsonColumn": "iot_messages.json_data",
+            "jsonValues": [
+                {
+                    "jsonName": "temp",
+                    "sqlName": "temperature",
+                    "sqlType": "FLOAT"
+                },
+                {
+                    "jsonName": "humidity",
+                    "sqlName": "humidity_percentage",
+                    "sqlType": "INTEGER"
+                },
+                {
+                    "jsonName": "dust",
+                    "sqlName": "dust_ppm",
+                    "sqlType": "INTEGER"
+                }
+            ]
+        },
+        "relationships": [
+            {
+                "name": "source_message",
+                "referencing_table": "iot_environment",
+                "referencing_key": "message_id",
+                "referenced_table": "iot_messages",
+                "referenced_key": "message_id"
+            }
+            ]
+        }
+    ]
+}

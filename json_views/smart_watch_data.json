@@ -1,0 +1,50 @@
+{
+    "views": 
+    [
+        {
+        "name": "iot_smart_watch",
+        "description": "Convert smart watch JSON data into SQL columns",
+        "query": {
+            "select": "SELECT message_id, membership.iot_messages.created_at",
+            "from": "FROM membership.iot_messages",
+            "join": "INNER JOIN membership.iot_devices ON membership.iot_devices.device_id = membership.iot_messages.device_id INNER JOIN membership.iot_device_types ON membership.iot_device_types.name = membership.iot_devices.device_type_id", 
+            "where": "WHERE device_type_id = 'SMW'",
+            "orderBy": "ORDER BY membership.iot_messages.created_at"
+        },
+        "columns": {
+            "jsonColumn": "iot_messages.json_data",
+            "jsonValues": [
+                {
+                    "jsonName": "temp",
+                    "sqlName": "temperature",
+                    "sqlType": "FLOAT"
+                },
+                {
+                    "jsonName": "heart_rate",
+                    "sqlName": "heart_bpm",
+                    "sqlType": "INTEGER"
+                },
+                {
+                    "jsonName": "steps",
+                    "sqlName": "step_count",
+                    "sqlType": "INTEGER"
+                },
+                {
+                    "jsonName": "oxygen",
+                    "sqlName": "O2Sat",
+                    "sqlType": "INTEGER"
+                }
+            ]
+        },
+        "relationships": [
+            {
+                "name": "source_message",
+                "referencing_table": "iot_smart_watch",
+                "referencing_key": "message_id",
+                "referenced_table": "iot_messages",
+                "referenced_key": "message_id"
+            }
+            ]
+        }
+    ]
+}

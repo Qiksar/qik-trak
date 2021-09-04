@@ -1,24 +1,26 @@
 class QikTrakNames {
     
+    constructor(config) {
+        if(!config)
+            throw ("config is required")
+
+        this.config = config;
+    }
+
     //---------------------------------------------------------------------------------------------------------------------------
     // Default relationship name builder
-    getArrayRelationshipName(config, relationship) {
-        if (!config)
-            throw ("config is required");
-
-        //const name = relationship.key1.replace(config.primaryKeySuffix, "") + "_" + relationship.table1;
-        const name = relationship.key1.replace(config.primaryKeySuffix, "") ;
+    getArrayRelationshipName(relationship) {
+        //const name = relationship.referencing_key.replace(this.config.primaryKeySuffix, "") ;
+        const name = relationship.referencing_table;
         return name; 
     }
 
 
     //---------------------------------------------------------------------------------------------------------------------------
     // Default relationship name builder
-    getObjectRelationshipName(config, relationship) {
-        if (!config)
-            throw ("config is required");
-
-        return relationship.key1.replace(config.primaryKeySuffix, "");
+    getObjectRelationshipName(relationship) {
+        const name = relationship.referencing_key.replace(this.config.primaryKeySuffix, "");
+        return name;
     }
 
     //---------------------------------------------------------------------------------------------------------------------------

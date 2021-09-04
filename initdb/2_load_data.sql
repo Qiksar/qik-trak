@@ -39,3 +39,36 @@ VALUES
 
 UPDATE membership.groups SET leader_id=1 WHERE group_id = 1;
 UPDATE membership.groups SET leader_id=4 WHERE group_id = 2;
+
+
+---
+--- IOT sample data
+---
+
+INSERT INTO membership.iot_device_types
+("name", "comment")
+VALUES
+('SMW', 'Smart Watch'),
+('ENV', 'Environmental Monitor')
+;
+
+INSERT INTO membership.iot_devices
+("member_id","device_type_id", "description")
+VALUES
+(1, 'SMW', 'Jack''s smart watch'),
+(1, 'ENV', 'Jack''s Environmental Monitor')
+;
+
+INSERT INTO membership.iot_messages
+("device_id", "json_data")
+VALUES
+(1, '{ "temp": 25.1, "heart_rate": 80, "steps": 250, "oxygen": 100 }'),
+(1, '{ "temp": 26.8, "heart_rate": 120, "steps": 200, "oxygen": 96 }'),
+(1, '{ "temp": 27.3, "heart_rate": 110, "steps": 100, "oxygen": 97 }'),
+(1, '{ "temp": 28.5, "heart_rate": 90, "steps": 50, "oxygen": 96 }'),
+(1, '{ "temp": 31.2, "heart_rate": 80, "steps": 20, "oxygen": 100 }'),
+(2, '{ "temp": 28, "humidity": 60, "dust": 200 }'),
+(2, '{ "temp": 30, "humidity": 50, "dust": 200 }'),
+(2, '{ "temp": 29.5, "humidity": 55, "dust": 200 }'),
+(2, '{ "temp": 27.5, "humidity": 68, "dust": 200 }')
+;
