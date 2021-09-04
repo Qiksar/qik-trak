@@ -276,7 +276,7 @@ COMMENT ON VIEW "${this.config.targetSchema}"."${view.name}" IS '${view.descript
         // Relationship tracking has to be deferred until trable tracking is complete
         if (view.relationships) {
             view.relationships.map(async (relationship) => {
-                this.config.JsonViews.push(relationship);
+                this.config.JsonViewRelationships.push(relationship);
             });
         }
     }

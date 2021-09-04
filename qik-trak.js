@@ -14,7 +14,7 @@ class QikTrack {
     constructor(cfg){
         this.config =  {
             ...cfg,
-            JsonViews:[]
+            JsonViewRelationships:[]
         };
         
         if (!this.config.primaryKeySuffix) {
@@ -171,7 +171,7 @@ class QikTrack {
                     });
                 
                 // Add relationships from the Json views
-                this.config.JsonViews.map((r) => {relationships.push(r)});
+                this.config.JsonViewRelationships.map((r) => {relationships.push(r)});
 
                 // --------------------------------------------------------------------------------------------------------------------------
                 // Configure HASURA to track all FOREIGN KEY RELATIONSHIPS - enables GraphQL to fetch related (nested) entities
