@@ -12,6 +12,46 @@ class QikTrakHasura {
         this.Namer = new QikTrakNames(config);
     }
 
+    async UntrackTable(table_name) {
+        
+        var query = {
+            type: "pg_untrack_table",
+            args: {
+                table: {
+                    schema: this.config.targetSchema,
+                    name: table_name
+                },
+                source: this.config.targetDatabase, 
+                cascade: true
+            }
+        };
+
+        await this.runGraphQL_Query('/v1/metadata',  query)
+            .catch(e => {
+                if (e.response.data.error.includes("already untracked")) {
+                    return;
+                }
+
+                this.Config.Logger.Log("");
+                this.Config.Logger.Log("");
+                this.Config.Logger.Log("--------------------------------------------------------------");
+                this.Config.Logger.Log("");
+                this.Config.Logger.Log("QIK-TRAK: ERROR");
+                this.Config.Logger.Log("");
+                this.Config.Logger.Log("GRAPHQL QUERY FAILED TO EXECUTE");
+                this.Config.Logger.Log("");
+                this.Config.Logger.Log("Error Message : " + e.response.data.internal.error.message);
+                this.Config.Logger.Log(e.response.request.data);
+                this.Config.Logger.Log("");
+                this.Config.Logger.Log("Query:");
+                this.Config.Logger.Log("");
+                this.Config.Logger.Log(JSON.stringify(query));
+                this.Config.Logger.Log("");
+                this.Config.Logger.Log("Are Hasura and the database fully initialised?");
+                this.Config.Logger.Log("");
+                this.Config.Logger.Log("--------------------------------------------------------------");
+            });;
+    }
 
     async createRelationships(relationship) {
         const array_rel_spec = {
@@ -186,11 +226,13 @@ class QikTrakHasura {
         const root = JSON.parse(content);
 
         root.views.map(async (view) =>  {
-            await this.buildView(view);
+            await this.buildJsonView(view);
         });
     }
 
-    async buildView(view) {
+    //--------------------------------------------------------------------------------------------------------------------------
+    // Build a specific JSON view
+    async buildJsonView(view) {
       
         const view_header =
 `

@@ -1,7 +1,0 @@
-path: {{entity}}/:offset/:limit/:order_by
-query: 
-all_{{entity}}($offset: Int!,$limit: Int!, $order_by: [syndicates_order_by!] = {syndicate_id: asc}) {
-  {{entity}}(order_by: $order_by, limit: $limit, offset: $offset) {
-  {{data}}  
-  }
-}
