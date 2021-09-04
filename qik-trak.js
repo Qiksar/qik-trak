@@ -17,18 +17,43 @@ class QikTrack {
 
     constructor(cfg){
         this.config = cfg;
+
+        if (!cfg.primaryKeySuffix) {
+            this.config.primaryKeySuffix = "_id";
+        }
+        
+        // --------------------------------------------------------------------------------------------------------------------------
+        // SQL to acquire table and foreign key metadata
+
+        this.config.table_sql =
+`
+SELECT table_name FROM information_schema.tables WHERE table_schema = '${this.config.targetSchema}'
+UNION
+SELECT table_name FROM information_schema.views WHERE table_schema = '${this.config.targetSchema}'
+ORDER BY table_name
+;`;
+
+        this.config.foreignKey_sql =
+`
+SELECT tc.table_name, kcu.column_name, ccu.table_name AS foreign_table_name, ccu.column_name AS foreign_column_name 
+FROM information_schema.table_constraints AS tc 
+JOIN information_schema.key_column_usage AS kcu ON tc.constraint_name = kcu.constraint_name AND kcu.constraint_schema = '${this.config.targetSchema}'
+JOIN information_schema.constraint_column_usage AS ccu ON ccu.constraint_name = tc.constraint_name AND ccu.constraint_schema = '${this.config.targetSchema}'
+WHERE constraint_type = 'FOREIGN KEY' 
+AND tc.table_schema = '${this.config.targetSchema}'
+;`;
+
     }
 
     //---------------------------------------------------------------------------------------------------------------------------
     // Entry point
     async ExecuteQikTrack() {
-        if (!this.config.primaryKeySuffix) {
-            this.config.primaryKeySuffix = "_id";
-        }
 
         this.tracker_log("--------------------------------------------------------------");
         this.tracker_log("");
         this.tracker_log("        qik-track          : Rapid, intuitive Hasura tracking setup");
+        this.tracker_log("");
+        this.tracker_log("        IN CONTAINER       : " + this.config.inContainer ? 'yes' : 'no');
         this.tracker_log("");
         this.tracker_log("        DATABASE           : '" + this.config.targetDatabase + "'");
         this.tracker_log("        SCHEMA             : '" + this.config.targetSchema + "'");
@@ -38,88 +63,86 @@ class QikTrack {
         this.tracker_log("--------------------------------------------------------------");
         this.tracker_log("");
 
-        this.config.getObjectRelationshipName = this.defaultObjectRelationshipName;
+        // In a docker build the database container needs time to 
+        // startup and initialise, so we wait 10 seconds
+        const timeout = this.config.inContainer ? 10000 : 1;
 
+        // The tracking operations are staggered 
+        // This may be clunky, but seems to fix a race condition
+        // where table tracking possiblydoesn't complete before
+        // relationship tracking setup begins
+        setTimeout(() => {this.runUntrack()}, timeout);
+        setTimeout(() => {this.runTrackTables()}, timeout + 2000);
+        setTimeout(() => {this.runTrackRelationships()}, timeout + 5000);
+    }
+
+    async runUntrack() {
+
+    if (!this.config.operations.untrack)
+        return true;
+
+    await this.runSQL_Query(this.config.table_sql)
+    .then(async (results) => {
+
+        var tables = results
+            .map(t => t[0])
+            .splice(1);
 
         // --------------------------------------------------------------------------------------------------------------------------
-        // SQL to acquire metadata
+        // Drop tracking information for all tables / views, this will also untrack any relationships
+        await this.untrackTables(tables);
+    });
+}
 
-        const table_sql =
-            `
- SELECT table_name FROM information_schema.tables WHERE table_schema = '${this.config.targetSchema}'
- UNION
- SELECT table_name FROM information_schema.views WHERE table_schema = '${this.config.targetSchema}'
- ORDER BY table_name;
- `;
+    async runTrackTables(){
 
-        const foreignKey_sql =
-            `
- SELECT tc.table_name, kcu.column_name, ccu.table_name AS foreign_table_name, ccu.column_name AS foreign_column_name 
- FROM information_schema.table_constraints AS tc 
- JOIN information_schema.key_column_usage AS kcu ON tc.constraint_name = kcu.constraint_name AND kcu.constraint_schema = '${this.config.targetSchema}'
- JOIN information_schema.constraint_column_usage AS ccu ON ccu.constraint_name = tc.constraint_name AND ccu.constraint_schema = '${this.config.targetSchema}'
- WHERE constraint_type = 'FOREIGN KEY' 
- AND tc.table_schema = '${this.config.targetSchema}'
- ;`;
+    if (!this.config.operations.trackTables)
+        return;
+        
+    await this.runSQL_Query(this.config.table_sql)
+        .then(async (results) => {
 
-        if (this.config.operations.untrack) {
+            var tables = results
+                .map(t => t[0])
+                .splice(1);
 
-            await this.runSQL_Query(table_sql)
-                .then(async (results) => {
+            // --------------------------------------------------------------------------------------------------------------------------
+            // Configure HASURA to track all TABLES and VIEWS - tables and views are added to the GraphQL schema automatically
+            await this.trackTables(tables);
+        });
+    }
 
-                    var tables = results
-                        .map(t => t[0])
-                        .splice(1);
+    async runTrackRelationships() {
+    
+    if (!this.config.operations.trackRelationships)
+        return;
 
-                    // --------------------------------------------------------------------------------------------------------------------------
-                    // Drop tracking information for all tables / views, this will also untrack any relationships
-                    await this.untrackTables(tables);
+    // Create the list of relationships required by foreign keys
+    await this.runSQL_Query(this.config.foreignKey_sql)
+        .then(async (results) => {
+
+            var foreignKeys = results.splice(1)
+                .map(fk => {
+                    return {
+                        table1: fk[0],
+                        key1: fk[1],
+                        table2: fk[2],
+                        key2: fk[3],
+                        addArrayRelationship: true,
+                        addObjectRelationship: true
+                    };
                 });
-        }
 
-        if (this.config.operations.trackTables) {
-            await this.runSQL_Query(table_sql)
-                .then(async (results) => {
+            // --------------------------------------------------------------------------------------------------------------------------
+            // Configure HASURA to track all FOREIGN KEY RELATIONSHIPS - enables GraphQL to fetch related (nested) entities
+            await this.trackRelationships(foreignKeys);
+            this.tracker_log("");
+        });
 
-                    var tables = results
-                        .map(t => t[0])
-                        .splice(1);
-
-                    // --------------------------------------------------------------------------------------------------------------------------
-                    // Configure HASURA to track all TABLES and VIEWS - tables and views are added to the GraphQL schema automatically
-                    await this.trackTables(tables);
-                });
-        }
-
-        if (this.config.operations.trackRelationships) {
-
-            // Create the list of relationships required by foreign keys
-            await this.runSQL_Query(foreignKey_sql)
-                .then(async (results) => {
-
-                    var foreignKeys = results.splice(1)
-                        .map(fk => {
-                            return {
-                                table1: fk[0],
-                                key1: fk[1],
-                                table2: fk[2],
-                                key2: fk[3],
-                                addArrayRelationship: true,
-                                addObjectRelationship: true
-                            };
-                        });
-
-                    // --------------------------------------------------------------------------------------------------------------------------
-                    // Configure HASURA to track all FOREIGN KEY RELATIONSHIPS - enables GraphQL to fetch related (nested) entities
-                    await this.trackRelationships(foreignKeys);
-                    this.tracker_log("");
-                });
-        }
     }
 
     // Setup of relationship naming should be done before execution of the auto tracker
     //#region Relationship naming
-
 
     //#endregion
 
@@ -195,7 +218,8 @@ class QikTrack {
                 }
             };
 
-            await this.runGraphQL_Query('/v1/metadata', query).catch(e => {
+            await this.runGraphQL_Query('/v1/metadata', query)
+            .catch(e => {
 
                 if (e.response.data.error.includes("already tracked")) {
                     return;
@@ -209,7 +233,7 @@ class QikTrack {
                 this.tracker_log("");
                 this.tracker_log(e.response.request.data);
                 this.tracker_log("");
-            });;
+            });
         });
     }
 

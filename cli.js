@@ -15,7 +15,8 @@ const cfg = {
     hasuraAdminSecret: process.env.HASURA_GRAPHQL_ADMIN_SECRET,
     hasuraEndpoint: process.env.HASURA_GRAPHQL_ENDPOINT,
     targetDatabase: process.env.TARGET_DATABASE,
-    targetSchema: process.env.TARGET_SCHEMA
+    targetSchema: process.env.TARGET_SCHEMA,
+    inContainer: process.env.IN_CONTAINER == 'true' || false
   }
 
-new QikTrak(cfg).ExecuteQikTrack()
+new QikTrak(cfg).ExecuteQikTrack();
