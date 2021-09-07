@@ -1,52 +1,52 @@
 version: "3.6"
 
 services:
-
   qiktrak_db:
-      env_file: .env
+    env_file: .env
 
-      container_name: qiktrak_db
-      image: postgres
+    container_name: qiktrak_db
+    image: postgres
 
-      volumes:
-          - ./initdb:/docker-entrypoint-initdb.d/
+    volumes:
+      - ./initdb:/docker-entrypoint-initdb.d/
 
-      ports:
-          - '7000:5432'
+    ports:
+      - "7000:5432"
 
-      restart: always
+    restart: always
 
   qiktrak_gql:
-      env_file: .env
-      
-      image: hasura/graphql-engine:latest
-      container_name: qiktrak_gql
+    env_file: .env
 
-      links: 
-          - qiktrak_db
+    image: hasura/graphql-engine:latest
+    container_name: qiktrak_gql
 
-      ports:
-          - '7001:8080'
+    links:
+      - qiktrak_db
 
-      command:
-          - graphql-engine
-          - serve
+    ports:
+      - "7001:8080"
 
-      restart: always
+    command:
+      - graphql-engine
+      - serve
 
-# Use this if you want to build the app into a container that you can run from the docker
+    restart: always
+
+  # Use this if you want to build the app into a container that you can run from the docker
   qik-trak:
     env_file: .env
     environment:
-        - HASURA_GRAPHQL_ENDPOINT=http://qiktrak_gql:8080
+      - HASURA_GRAPHQL_ENDPOINT=http://qiktrak_gql:8080
 
     container_name: qik-trak
+    image: registry.digitalocean.com/sndk8/qiktrak:latest
 
     build:
       context: .
       dockerfile: ./Dockerfile
-    
-    links: 
+
+    links:
       - qiktrak_db
       - qiktrak_gql
 
