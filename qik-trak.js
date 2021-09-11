@@ -67,7 +67,7 @@ class QikTrack {
         this.Logger.Log("");
 
         // When running in a container we wait 10 seconds so the database container can finish starting, initialising and be stable
-        const timeout = 10000; // milliseconds
+        const timeout = 1000; // milliseconds
 
         setTimeout(async () => {
           await this.RunUntrack();
