@@ -9,7 +9,9 @@
   "author": "NamSource Pty Ltd - www.namsource.com",
   "license": "GPL-3.0",
   "scripts": {
-    "start_cli": "node ./qik-trak-cli.js"
+    "start_cli": "node ./qik-trak-cli.js",
+    "backend_up": "docker-compose up --build -d qiktrak_db qiktrak_gql",
+    "backend_down": "docker-compose down"
   },
   "dependencies": {
     "axios": "^0.21.1",

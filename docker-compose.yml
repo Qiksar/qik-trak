@@ -10,9 +10,6 @@ services:
     volumes:
       - ./initdb:/docker-entrypoint-initdb.d/
 
-    ports:
-      - "7000:5432"
-
     restart: always
 
   qiktrak_gql:
@@ -25,7 +22,7 @@ services:
       - qiktrak_db
 
     ports:
-      - "7001:8080"
+      - "7123:8080"
 
     command:
       - graphql-engine

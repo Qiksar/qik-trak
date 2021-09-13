@@ -110,7 +110,7 @@ qik-track          : Rapid, intuitive Hasura tracking setup
 
 DATABASE           : 'qiktrak'
 SCHEMA             : 'membership'
-HASURA ENDPOINT    : 'http://localhost:7001'
+HASURA ENDPOINT    : 'http://localhost:7123'
 PRIMARY KEY SUFFIX : '_id'
 
 --------------------------------------------------------------
