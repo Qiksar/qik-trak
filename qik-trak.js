@@ -63,29 +63,43 @@ class QikTrack {
         this.Logger.Log("");
         this.Logger.Log("--------------------------------------------------------------");
         this.Logger.Log("");
-        this.Logger.Log("Initial 10 second wait whilst database stabilises...");
-        this.Logger.Log("");
 
         // When running in a container we wait 10 seconds so the database container can finish starting, initialising and be stable
-        const timeout = 1000; // milliseconds
+        let timeout = 1000; // milliseconds
+        const step_delay=5000;
 
         setTimeout(async () => {
-          await this.RunUntrack();
+            this.RunUntrack();
         }, timeout);
+        timeout += step_delay;
+
+        
+        setTimeout(async () => {
+            this.RunPreScripts();
+        }, timeout);
+        timeout += step_delay;
+        
 
         setTimeout(async () => {
-            await this.RunPreScripts();
-            await this.RunViews();
-            await this.RunPostScripts();
-        }, timeout+2000);
+            this.RunViews();
+        }, timeout);
+        timeout += step_delay;
+        
+        setTimeout(async () => {
+             this.RunPostScripts();
+        }, timeout);
+        timeout += step_delay;
+
 
         setTimeout(async () => {
-            await this.RunTrackTables();
-        }, timeout+5000);
+            this.RunTrackTables();
+        }, timeout);
+        timeout += step_delay;
+
 
         setTimeout(async () => {
-            await this.RunTrackRelationships();
-        }, timeout+10000);
+            this.RunTrackRelationships();
+        }, timeout);
     }
 
     async RunUntrack(){
@@ -113,7 +127,6 @@ class QikTrack {
 
         this.Logger.Log("EXECUTE SQL SCRIPTS BEFORE VIEW BUILDER");
         await this.executeScriptsBeforeViewBuilder();
-        this.Logger.Log("");
     }
 
     async RunViews() {
@@ -232,6 +245,8 @@ class QikTrack {
                 this.Logger.Log("");
             });;
         });
+
+        this.Logger.Log("");
     }
 
     //#endregion
@@ -247,7 +262,10 @@ class QikTrack {
             this.config.scripts.beforeViews.map(async (script) => {
                 await this.Hasura.executeSqlScript(script);
                 this.Logger.Log("    EXECUTED           - " + script);
+
             });
+
+            this.Logger.Log("");
         }
     }
 
@@ -258,7 +276,7 @@ class QikTrack {
             
             this.config.scripts.afterViews.map(async (script) => {
                 await this.Hasura.executeSqlScript(script);
-                this.Logger.Log("    EXECUTED       - " + script);
+                this.Logger.Log("    EXECUTED           - " + script);
             });
         }
     }

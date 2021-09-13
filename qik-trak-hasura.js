@@ -175,7 +175,7 @@ class QikTrakHasura {
                 if (!e.response)
                     this.config.Logger.Log("Error Message : " + e);
                 else
-                    this.config.Logger.Log("Error Message : " + e.response.data.error);
+                    this.config.Logger.Log("Error Message : " + JSON.stringify(e.response.data));
 
                 this.config.Logger.Log("");
                 this.config.Logger.Log("SQL Statement:");
@@ -185,6 +185,8 @@ class QikTrakHasura {
                 this.config.Logger.Log("Check for SQL syntax errors. Test the query in your admin tool.");
                 this.config.Logger.Log("");
                 this.config.Logger.Log("--------------------------------------------------------------");
+
+                throw e;
             });
     }
 

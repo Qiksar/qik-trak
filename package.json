@@ -11,7 +11,8 @@
   "scripts": {
     "start_cli": "node ./qik-trak-cli.js",
     "backend_up": "docker-compose up --build -d qiktrak_db qiktrak_gql",
-    "backend_down": "docker-compose down"
+    "backend_down": "docker-compose down",
+    "docker_prune": "docker system prune -f"
   },
   "dependencies": {
     "axios": "^0.21.2",
