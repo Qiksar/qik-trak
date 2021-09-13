@@ -196,7 +196,7 @@ class QikTrakHasura {
         if (!endpoint)
             throw ("endpoint is required");
         
-            if (!query)
+        if (!query)
             throw ("query is required");
 
         if (!this.config.hasuraAdminSecret)
