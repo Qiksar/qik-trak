@@ -106,7 +106,7 @@ class QikTrakHasura {
             }
         };
 
-        array_rel_spec.args.using.manual_configuration.column_mapping[relationship.referencing_key] = relationship.referenced_key;
+        obj_rel_spec.args.using.manual_configuration.column_mapping[relationship.referencing_key] = relationship.referenced_key;
 
         this.config.Logger.Log("   OBJECT RELATIONSHIP - " + obj_rel_spec .args.name + " is " + relationship.referencing_table + " referencing " + relationship.referenced_table + " using " +  relationship.referencing_key);
         await this.createRelationship(obj_rel_spec);
