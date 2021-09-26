@@ -31,7 +31,7 @@ services:
     restart: always
 
   # Use this if you want to build the app into a container that you can run from the docker
-  qik-trak:
+  qiktrak:
     env_file: .env
     environment:
       - HASURA_GRAPHQL_ENDPOINT=http://qiktrak_gql:8080
