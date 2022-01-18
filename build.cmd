@@ -7,4 +7,4 @@
 
 # ensure all packages are installed then build the required containers for each architecture
 npm install
-docker buildx build --push --platform linux/arm/v7,linux/arm64/v8,linux/amd64 --tag namsource/qiktrak:latest .
+docker buildx build --push --platform linux/arm/v7,linux/arm64/v8,linux/amd64 --tag qiksar/qiktrak:latest .
