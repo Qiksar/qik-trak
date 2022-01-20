@@ -8,17 +8,15 @@ const QikTrakHasura = require("./qik-trak-hasura");
 // The code also creates SQL views which can translate JSON values into SQL data columns
 //
 
-
 class QikTrack {
-
-    constructor(cfg){
-        this.config =  {
+    constructor(cfg) {
+        this.config = {
             ...cfg,
-            JsonViewRelationships:[]
+            JsonViewRelationships: [],
         };
-        
+
         if (!this.config.primaryKeySuffix) {
-                this.config.primaryKeySuffix = "_id";
+            this.config.primaryKeySuffix = "_id";
         }
 
         this.Logger = new QikTrakLogger(this.config);
@@ -28,16 +26,14 @@ class QikTrack {
         // --------------------------------------------------------------------------------------------------------------------------
         // SQL to acquire metadata
 
-        this.config.table_sql =
-`
+        this.config.table_sql = `
  SELECT table_name FROM information_schema.tables WHERE table_schema = '${this.config.targetSchema}'
  UNION
  SELECT table_name FROM information_schema.views WHERE table_schema = '${this.config.targetSchema}'
  ORDER BY table_name;
  `;
 
-        this.config.foreignKey_sql =
-`
+        this.config.foreignKey_sql = `
  SELECT tc.table_name, kcu.column_name, ccu.table_name AS foreign_table_name, ccu.column_name AS foreign_column_name 
  FROM information_schema.table_constraints AS tc 
  JOIN information_schema.key_column_usage AS kcu ON tc.constraint_name = kcu.constraint_name AND kcu.constraint_schema = '${this.config.targetSchema}'
@@ -50,187 +46,192 @@ class QikTrack {
     //---------------------------------------------------------------------------------------------------------------------------
     // Entry point
     async ExecuteQikTrack() {
-
-        this.Logger.Log("--------------------------------------------------------------");
+        this.Logger.Log(
+            "--------------------------------------------------------------"
+        );
         this.Logger.Log("");
-        this.Logger.Log("qik-track          : Rapid, intuitive Hasura tracking setup");
+        this.Logger.Log(
+            "qik-track          : Rapid, intuitive Hasura tracking setup"
+        );
         this.Logger.Log("");
-        this.Logger.Log("DATABASE           : '" + this.config.targetDatabase + "'");
+        this.Logger.Log(
+            "DATABASE           : '" + this.config.targetDatabase + "'"
+        );
         this.Logger.Log("SCHEMA             : '" + this.config.targetSchema + "'");
         this.Logger.Log("");
-        this.Logger.Log("HASURA ENDPOINT    : '" + this.config.hasuraEndpoint + "'");
-        this.Logger.Log("PRIMARY KEY SUFFIX : '" + this.config.primaryKeySuffix + "'");
+        this.Logger.Log(
+            "HASURA ENDPOINT    : '" + this.config.hasuraEndpoint + "'"
+        );
+        this.Logger.Log(
+            "PRIMARY KEY SUFFIX : '" + this.config.primaryKeySuffix + "'"
+        );
+
         this.Logger.Log("");
-        this.Logger.Log("--------------------------------------------------------------");
+        this.Logger.Log(
+            "DUMP JSON VIEW     : '" + this.config.dumpJsonViewSql + "'"
+        );
+
+        this.Logger.Log("");
+        this.Logger.Log(
+            "--------------------------------------------------------------"
+        );
         this.Logger.Log("");
 
         // When running in a container we wait 10 seconds so the database container can finish starting, initialising and be stable
         let timeout = 1000; // milliseconds
-        const step_delay=5000;
+        const step_delay = 5000;
 
-        setTimeout(async () => {
+        setTimeout(async() => {
             this.RunUntrack();
         }, timeout);
         timeout += step_delay;
 
-        
-        setTimeout(async () => {
+        setTimeout(async() => {
             this.RunPreScripts();
         }, timeout);
         timeout += step_delay;
-        
 
-        setTimeout(async () => {
+        setTimeout(async() => {
             this.RunViews();
         }, timeout);
         timeout += step_delay;
-        
-        setTimeout(async () => {
-             this.RunPostScripts();
+
+        setTimeout(async() => {
+            this.RunPostScripts();
         }, timeout);
         timeout += step_delay;
 
-
-        setTimeout(async () => {
+        setTimeout(async() => {
             this.RunTrackTables();
         }, timeout);
         timeout += step_delay;
 
-
-        setTimeout(async () => {
+        setTimeout(async() => {
             this.RunTrackRelationships();
         }, timeout);
     }
 
-    async RunUntrack(){
-        if (!this.config.operations.untrack)
-            return;
+    async RunUntrack() {
+        if (!this.config.operations.untrack) return;
 
-        await this.Hasura.runSQL_Query(this.config.table_sql)
-            .then(async (results) => {
-
-                var tables = results
-                    .map(t => t[0])
-                    .splice(1);
+        await this.Hasura.runSQL_Query(this.config.table_sql).then(
+            async(results) => {
+                var tables = results.map((t) => t[0]).splice(1);
 
                 // --------------------------------------------------------------------------------------------------------------------------
                 // Drop tracking information for all tables / views, this will also untrack any relationships
                 await this.untrackTables(tables);
-            });
+            }
+        );
 
-            this.Logger.Log("");
+        this.Logger.Log("");
     }
 
     async RunPreScripts() {
-        if (!this.config.operations.executeSqlScripts) 
-            return;
+        if (!this.config.operations.executeSqlScripts) return;
 
         this.Logger.Log("EXECUTE SQL SCRIPTS BEFORE VIEW BUILDER");
         await this.executeScriptsBeforeViewBuilder();
     }
 
     async RunViews() {
-        if (!this.config.operations.createJsonViews)
-            return;
+        if (!this.config.operations.createJsonViews) return;
 
         this.Logger.Log("GENERATE JSON VIEWS");
         await this.createJsonViews();
         this.Logger.Log("");
     }
 
-    async RunPostScripts(){
-        if (!this.config.operations.executeSqlScripts) 
-            return;
-    
+    async RunPostScripts() {
+        if (!this.config.operations.executeSqlScripts) return;
+
         this.Logger.Log("EXECUTE SQL SCRIPTS AFTER VIEW BUILDER");
         await this.executeScriptsAfterViewBuilder();
         this.Logger.Log("");
     }
 
-    async RunTrackTables(){
-        if (!this.config.operations.trackTables)
-            return;
+    async RunTrackTables() {
+        if (!this.config.operations.trackTables) return;
 
-        await this.Hasura.runSQL_Query(this.config.table_sql)
-            .then(async (results) => {
-
-                var tables = results
-                    .map(t => t[0])
-                    .splice(1);
+        await this.Hasura.runSQL_Query(this.config.table_sql).then(
+            async(results) => {
+                var tables = results.map((t) => t[0]).splice(1);
 
                 // --------------------------------------------------------------------------------------------------------------------------
                 // Configure HASURA to track all TABLES and VIEWS - tables and views are added to the GraphQL schema automatically
                 await this.trackTables(tables);
-            });
+            }
+        );
     }
 
-    async RunTrackRelationships(){
-        
-        if (!this.config.operations.trackRelationships)
-            return;
-    
-        // Create the list of relationships required by foreign keys
-        await this.Hasura.runSQL_Query(this.config.foreignKey_sql)
-            .then(async (results) => {
+    async RunTrackRelationships() {
+        if (!this.config.operations.trackRelationships) return;
 
-                var relationships = results.splice(1)
-                    .map(fk => {
-                        return {
-                            referencing_table: fk[0],
-                            referencing_key: fk[1],
-                            referenced_table: fk[2],
-                            referenced_key: fk[3]
-                        };
-                    });
-                
+        // Create the list of relationships required by foreign keys
+        await this.Hasura.runSQL_Query(this.config.foreignKey_sql).then(
+            async(results) => {
+                var relationships = results.splice(1).map((fk) => {
+                    return {
+                        referencing_table: fk[0],
+                        referencing_key: fk[1],
+                        referenced_table: fk[2],
+                        referenced_key: fk[3],
+                    };
+                });
+
                 // Add relationships from the Json views
-                this.config.JsonViewRelationships.map((r) => {relationships.push(r)});
+                this.config.JsonViewRelationships.map((r) => {
+                    relationships.push(r);
+                });
 
                 // --------------------------------------------------------------------------------------------------------------------------
                 // Configure HASURA to track all FOREIGN KEY RELATIONSHIPS - enables GraphQL to fetch related (nested) entities
-                
-                relationships.map(async (r) => {await this.Hasura.createRelationships(r)});
+
+                relationships.map(async(r) => {
+                    await this.Hasura.createRelationships(r);
+                });
                 this.Logger.Log("");
-            });
+            }
+        );
     }
 
     //#region Table Tracking
 
     // --------------------------------------------------------------------------------------------------------------------------
-    // Configure HASURA to track all tables and views in the specified schema 
+    // Configure HASURA to track all tables and views in the specified schema
     async untrackTables(tables) {
-        this.Logger.Log("REMOVE PREVIOUS HASURA TRACKING DETAILS FOR TABLES AND VIEWS");
+        this.Logger.Log(
+            "REMOVE PREVIOUS HASURA TRACKING DETAILS FOR TABLES AND VIEWS"
+        );
 
-        tables.map(async (table_name) => {
+        tables.map(async(table_name) => {
             this.Logger.Log("    UNTRACK TABLE      - " + table_name);
             await this.Hasura.UntrackTable(table_name);
         });
     }
 
-
     // --------------------------------------------------------------------------------------------------------------------------
-    // Configure HASURA to track all tables and views in the specified schema 
+    // Configure HASURA to track all tables and views in the specified schema
     async trackTables(tables) {
         this.Logger.Log("");
         this.Logger.Log("Configure HASURA TABLE/VIEW TRACKING");
 
-        tables.map(async (table_name) => {
+        tables.map(async(table_name) => {
             this.Logger.Log("    TRACK TABLE        - " + table_name);
 
             var query = {
                 type: "pg_track_table",
                 args: {
-                    source: this.config.targetDatabase, 
+                    source: this.config.targetDatabase,
                     schema: this.config.targetSchema,
                     name: table_name,
                     configuration: {
-                        custom_name: table_name
-                    }
-                }
+                        custom_name: table_name,
+                    },
+                },
             };
 
-            await this.Hasura.runGraphQL_Query('/v1/metadata', query).catch(e => {
-
+            await this.Hasura.runGraphQL_Query("/v1/metadata", query).catch((e) => {
                 if (e.response.data.error.includes("already tracked")) {
                     return;
                 }
@@ -239,11 +240,16 @@ class QikTrack {
                 this.Logger.Log("");
                 this.Logger.Log(JSON.stringify(query));
                 this.Logger.Log("");
-                this.Logger.Log("EXCEPTION DETAILS - creating " + currentRelationshipType + " - " + currentRelationshipName);
+                this.Logger.Log(
+                    "EXCEPTION DETAILS - creating " +
+                    currentRelationshipType +
+                    " - " +
+                    currentRelationshipName
+                );
                 this.Logger.Log("");
                 this.Logger.Log(e.response.request.data);
                 this.Logger.Log("");
-            });;
+            });
         });
 
         this.Logger.Log("");
@@ -251,18 +257,15 @@ class QikTrack {
 
     //#endregion
 
-
     //#region View Generation
 
     // --------------------------------------------------------------------------------------------------------------------------
     // Execute SQL scripts required before view creation
     async executeScriptsBeforeViewBuilder() {
         if (this.config.scripts && this.config.scripts.beforeViews) {
-          
-            this.config.scripts.beforeViews.map(async (script) => {
+            this.config.scripts.beforeViews.map(async(script) => {
                 await this.Hasura.executeSqlScript(script);
                 this.Logger.Log("    EXECUTED           - " + script);
-
             });
 
             this.Logger.Log("");
@@ -273,8 +276,7 @@ class QikTrack {
     // Execute SQL scripts required after view creation
     async executeScriptsAfterViewBuilder() {
         if (this.config.scripts && this.config.scripts.afterViews) {
-            
-            this.config.scripts.afterViews.map(async (script) => {
+            this.config.scripts.afterViews.map(async(script) => {
                 await this.Hasura.executeSqlScript(script);
                 this.Logger.Log("    EXECUTED           - " + script);
             });
@@ -285,7 +287,7 @@ class QikTrack {
     // Create Postgres views that flatten JSON payloads into SQL columns
     async createJsonViews() {
         if (this.config.views) {
-            this.config.views.map(async (viewFile) => {
+            this.config.views.map(async(viewFile) => {
                 await this.Hasura.generateJsonView(viewFile);
                 this.Logger.Log("    BUILT              - " + viewFile);
             });

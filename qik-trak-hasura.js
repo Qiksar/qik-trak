@@ -5,7 +5,7 @@ const QikTrakNames = require("./qik-trak-names");
 class QikTrakHasura {
 
     constructor(config) {
-        if(!config)
+        if (!config)
             throw ("config is required")
 
         this.config = config;
@@ -13,7 +13,7 @@ class QikTrakHasura {
     }
 
     async UntrackTable(table_name) {
-        
+
         var query = {
             type: "pg_untrack_table",
             args: {
@@ -21,12 +21,12 @@ class QikTrakHasura {
                     schema: this.config.targetSchema,
                     name: table_name
                 },
-                source: this.config.targetDatabase, 
+                source: this.config.targetDatabase,
                 cascade: true
             }
         };
 
-        await this.runGraphQL_Query('/v1/metadata',  query)
+        await this.runGraphQL_Query('/v1/metadata', query)
             .catch(e => {
                 if (e.response.data.error.includes("already untracked")) {
                     return;
@@ -56,23 +56,22 @@ class QikTrakHasura {
     async createRelationships(relationship) {
         const array_rel_spec = {
             type: "pg_create_array_relationship",
-            
+
             args: {
                 name: this.Namer.getArrayRelationshipName(relationship),
 
-                table:  {
+                table: {
                     schema: this.config.targetSchema,
                     name: relationship.referenced_table
                 },
-                
+
                 using: {
                     manual_configuration: {
                         remote_table: {
                             schema: this.config.targetSchema,
                             name: relationship.referencing_table
                         },
-                        column_mapping:{ 
-                        }
+                        column_mapping: {}
                     }
                 }
             }
@@ -80,18 +79,18 @@ class QikTrakHasura {
 
         array_rel_spec.args.using.manual_configuration.column_mapping[relationship.referenced_key] = relationship.referencing_key;
 
-        this.config.Logger.Log("    ARRAY RELATIONSHIP - " + array_rel_spec.args.name + " -> " + relationship.referencing_table + " where " + relationship.referencing_table + "." + relationship.referencing_key + " matches " + relationship.referenced_table + "." +  relationship.referenced_key);
+        this.config.Logger.Log("    ARRAY RELATIONSHIP - " + array_rel_spec.args.name + " -> " + relationship.referencing_table + " where " + relationship.referencing_table + "." + relationship.referencing_key + " matches " + relationship.referenced_table + "." + relationship.referenced_key);
         await this.createRelationship(array_rel_spec);
 
         const obj_rel_spec = {
             type: "pg_create_object_relationship",
-            
+
             args: {
                 name: this.Namer.getObjectRelationshipName(relationship),
 
                 table: {
                     schema: this.config.targetSchema,
-                    name:  relationship.referencing_table
+                    name: relationship.referencing_table
                 },
                 using: {
                     manual_configuration: {
@@ -99,8 +98,7 @@ class QikTrakHasura {
                             schema: this.config.targetSchema,
                             name: relationship.referenced_table
                         },
-                        column_mapping:{ 
-                        }
+                        column_mapping: {}
                     }
                 }
             }
@@ -108,7 +106,7 @@ class QikTrakHasura {
 
         obj_rel_spec.args.using.manual_configuration.column_mapping[relationship.referencing_key] = relationship.referenced_key;
 
-        this.config.Logger.Log("   OBJECT RELATIONSHIP - " + obj_rel_spec .args.name + " is " + relationship.referencing_table + " referencing " + relationship.referenced_table + " using " +  relationship.referencing_key);
+        this.config.Logger.Log("   OBJECT RELATIONSHIP - " + obj_rel_spec.args.name + " is " + relationship.referencing_table + " referencing " + relationship.referenced_table + " using " + relationship.referencing_key);
         await this.createRelationship(obj_rel_spec);
     }
 
@@ -194,10 +192,10 @@ class QikTrakHasura {
     //--------------------------------------------------------------------------------------------------------------------------
     // Execute a GraphQL query via the Hasura API
     async runGraphQL_Query(endpoint, query) {
-      
+
         if (!endpoint)
             throw ("endpoint is required");
-        
+
         if (!query)
             throw ("query is required");
 
@@ -227,7 +225,7 @@ class QikTrakHasura {
         const content = fs.readFileSync(viewFile, { encoding: "utf8" });
         const root = JSON.parse(content);
 
-        root.views.map(async (view) =>  {
+        root.views.map(async(view) => {
             await this.buildJsonView(view);
         });
     }
@@ -235,15 +233,15 @@ class QikTrakHasura {
     //--------------------------------------------------------------------------------------------------------------------------
     // Build a specific JSON view
     async buildJsonView(view) {
-      
+
         const view_header =
-`
+            `
 DROP VIEW IF EXISTS "${this.config.targetSchema}"."${view.name}";
 CREATE VIEW "${this.config.targetSchema}"."${view.name}" AS
 `;
 
         const view_footer =
-`
+            `
 COMMENT ON VIEW "${this.config.targetSchema}"."${view.name}" IS '${view.description}';
 `;
 
@@ -256,13 +254,13 @@ COMMENT ON VIEW "${this.config.targetSchema}"."${view.name}" IS '${view.descript
 
             view.columns.jsonValues.map(col => {
                 view_columns +=
-`CAST(${view.columns.jsonColumn} ->> '${col.jsonName}' AS ${col.sqlType}) AS "${col.sqlName}",`;
+                    `CAST(${view.columns.jsonColumn} ->> '${col.jsonName}' AS ${col.sqlType}) AS "${col.sqlName}",`;
             });
 
         }
 
-        var sql_statement = 
-`
+        var sql_statement =
+            `
  ${view_header}
  ${view.query.select.trim().replace(/,\s*$/, "")}
  ${view_columns.trim().replace(/,\s*$/, "")}
@@ -273,11 +271,19 @@ COMMENT ON VIEW "${this.config.targetSchema}"."${view.name}" IS '${view.descript
  ${view_footer};
 `;
 
+        if (this.config.dumpJsonViewSql) {
+            this.config.Logger.Log("");
+            this.config.Logger.Log("");
+            this.config.Logger.Log(sql_statement);
+            this.config.Logger.Log("");
+            this.config.Logger.Log("");
+        }
+
         await this.runSQL_Query(sql_statement);
 
         // Relationship tracking has to be deferred until trable tracking is complete
         if (view.relationships) {
-            view.relationships.map(async (relationship) => {
+            view.relationships.map(async(relationship) => {
                 this.config.JsonViewRelationships.push(relationship);
             });
         }
