@@ -1,10 +1,10 @@
 version: "3.6"
 
 services:
-  qiksar_db:
+  qiktrak_db:
     env_file: .env
 
-    container_name: qiksar_db
+    container_name: qiktrak_db
     image: postgres
 
     volumes:
@@ -12,14 +12,14 @@ services:
 
     restart: always
 
-  qiksar_gql:
+  qiktrak_gql:
     env_file: .env
 
     image: hasura/graphql-engine:latest
-    container_name: qiksar_gql
+    container_name: qiktrak_gql
 
     links:
-      - qiksar_db
+      - qiktrak_db
 
     ports:
       - "7123:8080"
@@ -30,22 +30,22 @@ services:
 
     restart: always
 
-  # Use this if you want to build the app into a container that you can run from the docker
+  # Use this if you want to build the app into a container that you can run from docker
   qiktrak:
     env_file: .env
     environment:
-      - HASURA_GRAPHQL_ENDPOINT=http://qiksar_gql:8080
+      - HASURA_GRAPHQL_ENDPOINT=http://qiktrak_gql:8080
 
-    container_name: qiksar
-    image: qiksar/qiktrak:latest
+    container_name: qiktrak
+    image: qiktrak/qiktrak:latest
 
     build:
       context: .
       dockerfile: ./Dockerfile
 
     links:
-      - qiksar_db
-      - qiksar_gql
+      - qiktrak_db
+      - qiktrak_gql
 
     command:
       - node

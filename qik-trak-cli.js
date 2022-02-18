@@ -4,6 +4,7 @@ const fs = require('fs');
 const env = require('dotenv').config();
 const QikTrak = require('./qik-trak');
 
+// Get files of a specified type from the folder
 function getFiles(folder, fileType) {
     try {
         return fs.readdirSync(folder).filter(f => f.toLowerCase().endsWith(fileType.toLowerCase())).map(f => { return folder + "/" + f });
@@ -13,28 +14,29 @@ function getFiles(folder, fileType) {
     }
 }
 
+// Configure all aspects of tracker behaviour 
 const cfg = {
     operations: {
-        untrack: true,
-        trackTables: true,
-        trackRelationships: true,
-        createJsonViews: true,
-        executeSqlScripts: true
+        untrack: true, // remove all existing tracking metadata
+        trackTables: true, // track all tables
+        trackRelationships: true, // track all relationhips
+        createJsonViews: true, // create views to conveniently surface JSON data as columns
+        executeSqlScripts: true // execute SQL scripts
     },
 
     scripts: {
-        beforeViews: [],
-        afterViews: []
+        beforeViews: [], // list of scripts to run before JSON views are created
+        afterViews: [] // list of scripts to run after JSON views have been created
     },
 
-    views: [],
+    views: [], // list of JSON views
 
-    logOutput: true,
-    hasuraAdminSecret: process.env.HASURA_GRAPHQL_ADMIN_SECRET,
-    hasuraEndpoint: process.env.HASURA_GRAPHQL_ENDPOINT,
-    targetDatabase: process.env.TARGET_DATABASE,
-    targetSchema: process.env.TARGET_SCHEMA,
-    dumpJsonViewSql: process.env.JSON_VIEWS_DUMP_SQL
+    logOutput: true, // Log output to the console
+    hasuraAdminSecret: process.env.HASURA_GRAPHQL_ADMIN_SECRET, // admin secret is required to provide all of the intrinsic operations
+    hasuraEndpoint: process.env.HASURA_GRAPHQL_ENDPOINT, // path to the HASURA endpoint
+    targetDatabase: process.env.TARGET_DATABASE, // name of target database
+    targetSchema: process.env.TARGET_SCHEMA, // name of target schema
+    dumpJsonViewSql: process.env.JSON_VIEWS_DUMP_SQL ? true : false // special hack to log generated JSON views to the console so they can be copied and pasted into other migration scripts
 }
 
 if (cfg.operations.executeSqlScripts) {
@@ -50,4 +52,5 @@ if (cfg.operations.createJsonViews) {
         cfg.views = getFiles(process.env.JSON_VIEWS_FOLDER, "json");
 }
 
+// Execute the Qiktrak operation
 new QikTrak(cfg).ExecuteQikTrack()
