@@ -39,6 +39,9 @@ services:
     container_name: qiktrak
     image: qiktrak/qiktrak:latest
 
+    volumes:
+      - ./example_db:/example_db
+
     build:
       context: .
       dockerfile: ./Dockerfile
@@ -49,4 +52,4 @@ services:
 
     command:
       - node
-      - qik-trak-cli.js
+      - qiktrak-cli.js

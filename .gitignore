@@ -2,3 +2,5 @@ package-lock.json
 node_modules
 local.*
 local.*.*
+dist
+yarn.lock

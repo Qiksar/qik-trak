@@ -1,2 +1,4 @@
 FROM node
-COPY . .
+COPY ./package.json .
+RUN npm install
+COPY ./dist/src .
