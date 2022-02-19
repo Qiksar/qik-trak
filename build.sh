@@ -1,3 +1,4 @@
+#!/bin/sh
 # NOTE! : Execute the following command once to enabled docker buildx to create multi-architecture images
 #
 # docker buildx create --name docker-builder --use
