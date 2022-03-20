@@ -76,7 +76,7 @@ export default class QikTrack {
     await this.RunViews();
     await this.RunPostScripts();
     await this.RunTrackTables();
-    //await this.RunTrackRelationships();
+    await this.RunTrackRelationships();
   }
 
   async RunUntrack() {
