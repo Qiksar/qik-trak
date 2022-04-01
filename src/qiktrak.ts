@@ -19,8 +19,10 @@ export default class QikTrack {
       JsonViewRelationships: [],
     };
 
-    if (!this.config.primaryKeySuffix) {
-      this.config.primaryKeySuffix = '_id';
+    // --------------------------------------------------------------------------------------------------------------------------
+    // Adopt a default value for key suffix if none was specified
+    if (!this.config.keyColumnSuffix) {
+      this.config.keyColumnSuffix = '_id';
     }
 
     this.Logger = new QikTrakLogger(this.config);
@@ -52,17 +54,23 @@ export default class QikTrack {
   async ExecuteQikTrack() {
     this.Logger.Log('--------------------------------------------------------------');
     this.Logger.Log('');
-    this.Logger.Log('qik-track          : Rapid, intuitive Hasura tracking setup');
+    this.Logger.Log('QikTrak            : Rapid, intuitive Hasura tracking setup');
     this.Logger.Log('');
     this.Logger.Log("DATABASE           : '" + this.config.targetDatabase + "'");
     this.Logger.Log("SCHEMA             : '" + this.config.targetSchema + "'");
     this.Logger.Log('');
     this.Logger.Log("HASURA ENDPOINT    : '" + this.config.hasuraEndpoint + "'");
-    this.Logger.Log("PRIMARY KEY SUFFIX : '" + this.config.primaryKeySuffix + "'");
+    this.Logger.Log("PRIMARY KEY SUFFIX : '" + this.config.keyColumnSuffix + "'");
 
     this.Logger.Log('');
     this.Logger.Log("DUMP JSON VIEW     : '" + this.config.dumpJsonViewSql + "'");
 
+    this.Logger.Log('');
+    this.Logger.Log('');
+    this.Logger.Log('REMINDER');
+    this.Logger.Log('QikTrak does not apply permissions. Please do this by using the');
+    this.Logger.Log('Hasura CLI');
+    this.Logger.Log('');
     this.Logger.Log('');
     this.Logger.Log('--------------------------------------------------------------');
     this.Logger.Log('');

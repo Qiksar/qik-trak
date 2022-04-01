@@ -13,7 +13,7 @@ export default class QikTrakNames {
   //---------------------------------------------------------------------------------------------------------------------------
   // Default relationship name builder
   getArrayRelationshipName(relationship: any) {
-    //const name = relationship.referencing_key.replace(this.config.primaryKeySuffix, "") ;
+    //const name = relationship.referencing_key.replace(this.config.keyColumnSuffix, "") ;
     const name = relationship.referencing_table;
     return name;
   }
@@ -21,7 +21,7 @@ export default class QikTrakNames {
   //---------------------------------------------------------------------------------------------------------------------------
   // Default relationship name builder
   getObjectRelationshipName(relationship: any) {
-    const name = relationship.referencing_key.replace(this.config.primaryKeySuffix, '');
+    const name = relationship.referencing_key.replace(this.config.keyColumnSuffix, '');
     return name;
   }
 

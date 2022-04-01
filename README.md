@@ -8,7 +8,9 @@
 
 Super fast and opinionated setup for Hasura table and relationship tracking.
 
-In one line, qik-trak applies intuitive names to your tables and relationships, and provides a no-touch setup process for automated tracking settings. In other words, you don't have to use the Hasura Console to track your database and modify relationships names, which can be very abstract when they are set to the defaults used by Hasura.
+QikTrak applies intuitive names to your tables and relationships, and provides a no-touch setup process for automated tracking settings. 
+
+In other words, you don't have to use the Hasura Console to track your database and specify relationships names, which can be very abstract when they are set to the defaults used by Hasura.
 
 Skip to the end to see sample output, this might give you an instant idea of what the tool does.
 
@@ -106,7 +108,7 @@ Key point: This is a very simple membership database, and now my *members* table
 ```
 --------------------------------------------------------------
 
-qik-track          : Rapid, intuitive Hasura tracking setup   
+QikTrak            : Rapid, intuitive Hasura tracking setup   
 
 DATABASE           : 'qiktrak'
 SCHEMA             : 'membership'
@@ -164,4 +166,9 @@ Configure HASURA RELATIONSHIP TRACKING
    OBJECT RELATIONSHIP - device_type is iot_devices referencing iot_device_types using device_type_id
    OBJECT RELATIONSHIP - device is iot_messages referencing iot_devices using device_id
    OBJECT RELATIONSHIP - member is iot_devices referencing members using member_id
+
+   REMINDER
+   QikTrak does not apply permissions. Please do this by using the
+   Hasura CLI
+
 ```
